@@ -1,5 +1,7 @@
 package flow
 
+import "errors"
+
 // NodeType 节点类型
 type NodeType string
 
@@ -20,4 +22,23 @@ const (
 	ExclusiveGateway NodeType = "exclusiveGateway"
 	// ParallelGateway 并行网关
 	ParallelGateway NodeType = "parallelGateway"
+	Unknown         NodeType = "Unknown"
 )
+
+func GetNodeTypeByName(s string) (NodeType, error) {
+	switch s {
+	case "startEvent":
+		return StartEvent, nil
+	case "endEvent":
+		return EndEvent, nil
+	case "terminateEvent":
+		return TerminateEvent, nil
+	case "userTask":
+		return UserTask, nil
+	case "exclusiveGateway":
+		return ExclusiveGateway, nil
+	case "parallelGateway":
+		return ParallelGateway, nil
+	}
+	return Unknown, errors.New(s + "不支持的类型")
+}
