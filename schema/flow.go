@@ -2,13 +2,13 @@ package schema
 
 // 定义表名
 const (
-	FlowsTableName           = "p_flows"
-	FlowNodesTableName       = "p_flow_nodes"
-	NodeRoutersTableName     = "p_node_routers"
-	NodeAssignmentsTableName = "p_node_assignments"
-	FlowInstancesTableName   = "p_flow_instances"
-	NodeInstancesTableName   = "p_node_instances"
-	NodeCandidatesTableName  = "p_node_candidates"
+	FlowsTableName           = "f_flows"
+	FlowNodesTableName       = "f_flow_nodes"
+	NodeRoutersTableName     = "f_node_routers"
+	NodeAssignmentsTableName = "f_node_assignments"
+	FlowInstancesTableName   = "f_flow_instances"
+	NodeInstancesTableName   = "f_node_instances"
+	NodeCandidatesTableName  = "f_node_candidates"
 )
 
 // Flows 流程表

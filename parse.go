@@ -14,7 +14,7 @@ type Parser interface {
 type ParseResult struct {
 	FlowID      string        // 流程ID
 	FlowName    string        // 流程名称
-	FlowVersion int           // 流程版本号
+	FlowVersion int64         // 流程版本号
 	Nodes       []*NodeResult // 节点数据
 }
 
