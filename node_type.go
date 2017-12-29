@@ -3,6 +3,10 @@ package flow
 // NodeType 节点类型
 type NodeType string
 
+func (n NodeType) String() string {
+	return string(n)
+}
+
 const (
 	// StartEvent 开始事件
 	StartEvent NodeType = "startEvent"
