@@ -11,7 +11,7 @@ sql.Reg(db)
 
 exp := expression.CreateExecer("")
 // sql 表示成当前目录下开始导入 sql/sql.ql脚本，如果
-exp.ImportAlias("sql/sql.ql", "sql")
+exp.ScriptImportAlias("sql/sql.ql", "sql")
 
 // 这样就可以在脚本中使用 sql.Query(query,args...) sql.Count(query,args...) sql.One(query,args...) sql.querySliceStr 四个函数
 // 也可以使用sqlctx.QueryDB(db,ctx,query,args) sqlctx.CountDB(db,ctx,query,args) sqlctx.OneDB(db,ctx,query,args)
