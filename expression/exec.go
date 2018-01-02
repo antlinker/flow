@@ -26,10 +26,10 @@ type execExp struct {
 	imports map[string]string
 }
 
-func (e *execExp) Import(model string) {
+func (e *execExp) ScriptImport(model string) {
 	e.imports[model] = ""
 }
-func (e *execExp) ImportAlias(model, alias string) {
+func (e *execExp) ScriptImportAlias(model, alias string) {
 	e.imports[model] = alias
 }
 func (e *execExp) SetLibs(libs string) {

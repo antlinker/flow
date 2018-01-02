@@ -39,12 +39,16 @@ type Execer interface {
 	// ctx 上下文
 	// exp 为执行表达式
 	Exec(ctx ExpContext, exp string) (*OutData, error)
-	ImportAlias(model, alias string)
-	Import(model string)
+	// 导入脚本模块并指定别名
+	ScriptImportAlias(model, alias string)
+	// 导入脚本模块
+	ScriptImport(model string)
+	// 设置脚本模块库
+	SetLibs(libs string)
 }
 
-// Import 导入模块扩展
+// GlobalImport 全局导入模块扩展
 // 同一模块只能被导入一次，多次导入会导致panic
-func Import(name string, table map[string]interface{}) {
+func GlobalImport(name string, table map[string]interface{}) {
 	qlang.Import(name, table)
 }
