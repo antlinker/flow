@@ -13,13 +13,11 @@ import (
 	"gitee.com/antlinker/flow/util"
 )
 
-// HookHandle 定义钩子处理函数
-type HookHandle func([]byte) error
-
 // Engine 流程引擎
 type Engine struct {
 	flowBll *bll.Flow
 	parser  Parser
+	execer  Execer
 }
 
 func (e *Engine) parseFile(name string) ([]byte, error) {
@@ -111,4 +109,33 @@ func (e *Engine) LoadFile(name string) error {
 	}
 
 	return e.flowBll.CreateFlowBasic(flow, nodes, nodeRouters, nodeAssigns)
+}
+
+// HandleResult 处理结果
+type HandleResult struct {
+	IsEnd     bool        // 是否结束
+	NextNodes []*NextNode // 下一处理节点
+}
+
+// StartFlow 启动流程
+// flowCode 流程编号
+// userID 发起人
+// input 输入数据
+func (e *Engine) StartFlow(flowCode, userID string, input interface{}) (*HandleResult, error) {
+	return nil, nil
+}
+
+// HandleFlow 处理流程节点
+// nodeInstanceID 节点实例内码
+// userID 处理人
+// input 输入数据
+func (e *Engine) HandleFlow(nodeInstanceID, userID string, input interface{}) (*HandleResult, error) {
+	return nil, nil
+}
+
+// QueryTodoFlows 查询待办流程数据
+// flowCode 流程编号
+// userID 待办人
+func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstances, error) {
+	return nil, nil
 }

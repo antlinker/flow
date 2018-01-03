@@ -1,7 +1,10 @@
 package bll
 
 import (
+	"time"
+
 	"gitee.com/antlinker/flow/schema"
+	"gitee.com/antlinker/flow/util"
 )
 
 // Flow 流程管理
@@ -17,4 +20,83 @@ func (a *Flow) CheckFlowCode(code string) (bool, error) {
 // CreateFlowBasic 创建流程基础数据
 func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, routers []*schema.NodeRouters, assignments []*schema.NodeAssignments) error {
 	return a.Models.Flow.CreateFlowBasic(flow, nodes, routers, assignments)
+}
+
+// GetNode 获取流程节点
+func (a *Flow) GetNode(recordID string) (*schema.FlowNodes, error) {
+	return a.Models.Flow.GetNode(recordID)
+}
+
+// GetFlowInstance 获取流程实例
+func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstances, error) {
+	return a.Models.Flow.GetFlowInstance(recordID)
+}
+
+// GetNodeInstance 获取流程节点实例
+func (a *Flow) GetNodeInstance(recordID string) (*schema.NodeInstances, error) {
+	return a.Models.Flow.GetNodeInstance(recordID)
+}
+
+// QueryNodeRouters 查询节点路由
+func (a *Flow) QueryNodeRouters(sourceNodeID string) ([]*schema.NodeRouters, error) {
+	return a.Models.Flow.QueryNodeRouters(sourceNodeID)
+}
+
+// QueryNodeAssignments 查询节点指派
+func (a *Flow) QueryNodeAssignments(nodeID string) ([]*schema.NodeAssignments, error) {
+	return a.Models.Flow.QueryNodeAssignments(nodeID)
+}
+
+// CreateNodeInstance 创建节点实例
+func (a *Flow) CreateNodeInstance(flowInstanceID, nodeID string, inputData []byte, candidates []string) (string, error) {
+	nodeInstance := &schema.NodeInstances{
+		RecordID:       util.UUID(),
+		FlowInstanceID: flowInstanceID,
+		NodeID:         nodeID,
+		InputData:      string(inputData),
+		Status:         1,
+		Created:        time.Now().Unix(),
+	}
+
+	var nodeCandidates []*schema.NodeCandidates
+	for _, c := range candidates {
+		nodeCandidates = append(nodeCandidates, &schema.NodeCandidates{
+			RecordID:       util.UUID(),
+			NodeInstanceID: nodeInstance.RecordID,
+			CandidateID:    c,
+			Created:        nodeInstance.Created,
+		})
+	}
+
+	err := a.Models.Flow.CreateNodeInstance(nodeInstance, nodeCandidates)
+	if err != nil {
+		return "", err
+	}
+
+	return nodeInstance.RecordID, nil
+}
+
+// DoneNodeInstance 完成节点实例
+func (a *Flow) DoneNodeInstance(nodeInstanceID, processor string, outData []byte) error {
+	info := map[string]interface{}{
+		"processor":    processor,
+		"process_time": time.Now().Unix(),
+		"out_data":     string(outData),
+		"status":       2,
+		"updated":      time.Now().Unix(),
+	}
+	return a.Models.Flow.UpdateNodeInstance(nodeInstanceID, info)
+}
+
+// CheckFlowInstanceTodo 检查流程实例待办事项
+func (a *Flow) CheckFlowInstanceTodo(flowInstanceID string) (bool, error) {
+	return a.Models.Flow.CheckFlowInstanceTodo(flowInstanceID)
+}
+
+// DoneFlowInstance 完成流程实例
+func (a *Flow) DoneFlowInstance(flowInstanceID string) error {
+	info := map[string]interface{}{
+		"status": 9,
+	}
+	return a.Models.Flow.UpdateFlowInstance(flowInstanceID, info)
 }

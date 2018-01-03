@@ -22,9 +22,11 @@ const (
 	ExclusiveGateway NodeType = "exclusiveGateway"
 	// ParallelGateway 并行网关
 	ParallelGateway NodeType = "parallelGateway"
-	Unknown         NodeType = "Unknown"
+	// Unknown 未知类型
+	Unknown NodeType = "Unknown"
 )
 
+// GetNodeTypeByName 转换节点类型
 func GetNodeTypeByName(s string) (NodeType, error) {
 	switch s {
 	case "startEvent":
