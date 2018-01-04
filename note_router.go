@@ -294,8 +294,11 @@ func (n *NodeRouter) checkNextNodeType(t NodeType) (bool, error) {
 
 // 获取表达式数据
 func (n *NodeRouter) getExpData() []byte {
+	var input map[string]interface{}
+	json.Unmarshal(n.inputData, &input)
+
 	r := map[string]interface{}{
-		"input": n.inputData,
+		"input": input,
 		"flow":  n.flowInstance,
 		"node":  n.nodeInstance,
 	}

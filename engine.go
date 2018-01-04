@@ -10,6 +10,7 @@ import (
 
 	"gitee.com/antlinker/flow/bll"
 	"gitee.com/antlinker/flow/schema"
+	"gitee.com/antlinker/flow/service/db"
 	"gitee.com/antlinker/flow/util"
 	"github.com/pkg/errors"
 )
@@ -19,6 +20,25 @@ type Engine struct {
 	flowBll *bll.Flow
 	parser  Parser
 	execer  Execer
+}
+
+// Init 初始化流程引擎
+func (e *Engine) Init(db *db.DB, parser Parser, execer Execer) *Engine {
+	blls := new(bll.All).Init(db)
+	e.flowBll = blls.Flow
+	e.parser = parser
+	e.execer = execer
+	return e
+}
+
+// SetParser 设定解析器
+func (e *Engine) SetParser(parser Parser) {
+	e.parser = parser
+}
+
+// SetExecer 设定表达式执行器
+func (e *Engine) SetExecer(execer Execer) {
+	e.execer = execer
 }
 
 func (e *Engine) parseFile(name string) ([]byte, error) {
@@ -180,7 +200,7 @@ func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*H
 	return e.nextFlowHandle(nodeInstanceID, userID, inputData)
 }
 
-// QueryTodoFlows 查询待办流程数据
+// QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
 func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstances, error) {
