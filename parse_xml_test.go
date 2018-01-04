@@ -1,17 +1,13 @@
 package flow
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 )
-
-func TestParse(t *testing.T) {
-	var p Parser = ParserImpl{}
-	p.Parse(nil, nil)
-}
 
 func TestParseBpmn(t *testing.T) {
 	file, err := os.Open("test_data/basic.bpmn") // For read access.
@@ -27,8 +23,8 @@ func TestParseBpmn(t *testing.T) {
 		return
 	}
 
-	var p Parser = ParserImpl{}
-	v, err := p.Parse(nil, data)
+	p := NewXMLParser()
+	v, err := p.Parse(context.Background(), data)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -50,7 +46,7 @@ func TestParseBpmn2(t *testing.T) {
 		return
 	}
 
-	var p Parser = ParserImpl{}
+	p := NewXMLParser()
 	v, err := p.Parse(nil, data)
 	if err != nil {
 		fmt.Println(err.Error())

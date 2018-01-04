@@ -8,29 +8,16 @@ import (
 	"github.com/beevik/etree"
 )
 
-type Node struct {
-	ProcessCode string
-	Type        string
-	//Id int64  `gorm:"Id,primary_key,AUTO_INCREMENT"`
-	Code           string
-	Name           string
-	CandidateUsers []string
+// NewXMLParser xml解析器
+func NewXMLParser() Parser {
+	return &xmlParser{}
 }
 
-type SequenceFlow struct {
-	ProcessCode string
-	XmlName     string
-	Code        string
-	SourceRef   string
-	TargetRef   string
-	Explain     string
-	Expression  string
-}
-type ParserImpl struct {
+type xmlParser struct {
 }
 
-func (ParserImpl) Parse(ctx context.Context, content []byte) (*ParseResult, error) {
-	var result *ParseResult = &ParseResult{}
+func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, error) {
+	result := &ParseResult{}
 	var err error
 
 	//time.Now()
@@ -64,7 +51,7 @@ func (ParserImpl) Parse(ctx context.Context, content []byte) (*ParseResult, erro
 		if element.Tag == "documentation" || element.Tag == "extensionElements" {
 			continue
 		} else if element.Tag == "sequenceFlow" {
-			sequenceFlow, _ := ParseSequenceFlow(element)
+			sequenceFlow, _ := p.ParsesequenceFlow(element)
 			var routerResult RouterResult
 			routerResult.Expression = sequenceFlow.Expression
 			routerResult.Explain = sequenceFlow.Explain
@@ -73,7 +60,7 @@ func (ParserImpl) Parse(ctx context.Context, content []byte) (*ParseResult, erro
 				nodeResult.Routers = append(nodeResult.Routers, &routerResult)
 			}
 		} else {
-			node, _ := ParseNode(element)
+			node, _ := p.ParseNode(element)
 			var nodeResult NodeResult
 			nodeResult.NodeID = node.Code
 			nodeResult.NodeName = node.Name
@@ -93,8 +80,8 @@ func (ParserImpl) Parse(ctx context.Context, content []byte) (*ParseResult, erro
 	return result, nil
 }
 
-func ParseNode(element *etree.Element) (*Node, error) {
-	var node Node
+func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
+	var node nodeInfo
 
 	node.Type = element.Tag
 	if name := element.SelectAttr("name"); name != nil {
@@ -106,15 +93,14 @@ func ParseNode(element *etree.Element) (*Node, error) {
 	if candidateUsers := element.SelectAttr("candidateUsers"); candidateUsers != nil {
 		candidateUserList := strings.Split(candidateUsers.Value, ";")
 		node.CandidateUsers = candidateUserList
-		// node = id.Value
 	}
 	return &node, nil
 }
 
-func ParseSequenceFlow(element *etree.Element) (*SequenceFlow, error) {
+func (p *xmlParser) ParsesequenceFlow(element *etree.Element) (*sequenceFlow, error) {
 	hasExpression := false
-	var sequenceFlow SequenceFlow
-	sequenceFlow.XmlName = element.Tag
+	var sequenceFlow sequenceFlow
+	sequenceFlow.XMLName = element.Tag
 	sequenceFlow.Code = element.SelectAttr("id").Value
 	sequenceFlow.SourceRef = element.SelectAttr("sourceRef").Value
 	sequenceFlow.TargetRef = element.SelectAttr("targetRef").Value
@@ -131,4 +117,22 @@ func ParseSequenceFlow(element *etree.Element) (*SequenceFlow, error) {
 		sequenceFlow.Expression = "true"
 	}
 	return &sequenceFlow, nil
+}
+
+type nodeInfo struct {
+	ProcessCode    string
+	Type           string
+	Code           string
+	Name           string
+	CandidateUsers []string
+}
+
+type sequenceFlow struct {
+	ProcessCode string
+	XMLName     string
+	Code        string
+	SourceRef   string
+	TargetRef   string
+	Explain     string
+	Expression  string
 }
