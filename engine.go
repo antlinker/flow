@@ -204,5 +204,5 @@ func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*H
 // flowCode 流程编号
 // userID 待办人
 func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstances, error) {
-	return nil, nil
+	return e.flowBll.QueryTodoNodeInstances(flowCode, userID)
 }

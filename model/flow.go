@@ -307,3 +307,20 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 
 	return items, nil
 }
+
+// QueryTodoNodeInstances 查询用户的待办节点实例数据
+func (a *Flow) QueryTodoNodeInstances(flowID, userID string) ([]*schema.NodeInstances, error) {
+	query := fmt.Sprintf(`
+SELECT * FROM %s
+WHERE deleted=0 AND status=1
+AND record_id IN(SELECT * FROM %s WHERE deleted=0 AND candidate_id=?)
+AND flow_instance_id IN(SELECT * FROM %s WHERE deleted=0 AND status=1 AND flow_id=?)
+		`, schema.NodeInstancesTableName, schema.NodeCandidatesTableName, schema.FlowInstancesTableName)
+
+	var items []*schema.NodeInstances
+	_, err := a.db.Select(&items, query, userID, flowID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询用户的待办节点实例数据发生错误")
+	}
+	return items, nil
+}
