@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"encoding/json"
 
 	"gitee.com/antlinker/flow/schema"
 	"github.com/pkg/errors"
@@ -12,14 +13,21 @@ var (
 	ErrNotFound = errors.New("未找到流程相关的信息")
 )
 
+type (
+	// NextNodeHandle 定义下一节点处理函数
+	NextNodeHandle func(*schema.FlowNodes, *schema.NodeInstances, []*schema.NodeCandidates)
+	// EndHandle 定义流程结束处理函数
+	EndHandle func(*schema.FlowInstances)
+)
+
 var defaultNodeRouterOptions = &nodeRouterOptions{
 	autoStart: true,
 }
 
 type nodeRouterOptions struct {
 	autoStart  bool
-	onNextNode func(*schema.FlowNodes, *schema.NodeInstances)
-	onFlowEnd  func(*schema.FlowInstances)
+	onNextNode NextNodeHandle
+	onFlowEnd  EndHandle
 }
 
 // NodeRouterOption 节点路由配置
@@ -33,14 +41,14 @@ func AutoStartOption(autoStart bool) NodeRouterOption {
 }
 
 // OnNextNodeOption 注册下一节点处理事件配置
-func OnNextNodeOption(fn func(*schema.FlowNodes, *schema.NodeInstances)) NodeRouterOption {
+func OnNextNodeOption(fn NextNodeHandle) NodeRouterOption {
 	return func(o *nodeRouterOptions) {
 		o.onNextNode = fn
 	}
 }
 
 // OnFlowEndOption 注册流程结束事件
-func OnFlowEndOption(fn func(*schema.FlowInstances)) NodeRouterOption {
+func OnFlowEndOption(fn EndHandle) NodeRouterOption {
 	return func(o *nodeRouterOptions) {
 		o.onFlowEnd = fn
 	}
@@ -96,12 +104,6 @@ func (n *NodeRouter) Init(engine *Engine, nodeInstanceID string, inputData []byt
 	return n, nil
 }
 
-// NextNode 下一节点
-type NextNode struct {
-	Node         *schema.FlowNodes // 节点信息
-	CandidateIDs []string          // 节点候选人
-}
-
 // Next 流向下一节点
 func (n *NodeRouter) Next(processor string) error {
 	nodeType, err := GetNodeTypeByName(n.node.TypeCode)
@@ -120,7 +122,11 @@ func (n *NodeRouter) Next(processor string) error {
 
 		// 通知下一节点实例事件
 		if fn := n.opts.onNextNode; fn != nil {
-			fn(n.node, n.nodeInstance)
+			candidates, err := n.engine.flowBll.QueryNodeCandidates(n.nodeInstance.RecordID)
+			if err != nil {
+				return err
+			}
+			fn(n.node, n.nodeInstance, candidates)
 		}
 		return nil
 	}
@@ -220,7 +226,7 @@ func (n *NodeRouter) addNextNodeInstances() ([]string, error) {
 	var nodeInstanceIDs []string
 	for _, r := range routers {
 		if r.Expression != "" {
-			allow, err := n.engine.execer.ExecReturnBool(context.Background(), []byte(r.Expression), n.inputData)
+			allow, err := n.engine.execer.ExecReturnBool(context.Background(), []byte(r.Expression), n.getExpData())
 			if err != nil {
 				return nil, err
 			} else if !allow {
@@ -236,7 +242,7 @@ func (n *NodeRouter) addNextNodeInstances() ([]string, error) {
 
 		var candidates []string
 		for _, assign := range assigns {
-			ss, err := n.engine.execer.ExecReturnStringSlice(context.Background(), []byte(assign.Expression), n.inputData)
+			ss, err := n.engine.execer.ExecReturnStringSlice(context.Background(), []byte(assign.Expression), n.getExpData())
 			if err != nil {
 				return nil, err
 			}
@@ -263,7 +269,7 @@ func (n *NodeRouter) checkNextNodeType(t NodeType) (bool, error) {
 
 	for _, r := range routers {
 		if r.Expression != "" {
-			allow, err := n.engine.execer.ExecReturnBool(context.Background(), []byte(r.Expression), n.inputData)
+			allow, err := n.engine.execer.ExecReturnBool(context.Background(), []byte(r.Expression), n.getExpData())
 			if err != nil {
 				return false, err
 			} else if !allow {
@@ -284,4 +290,15 @@ func (n *NodeRouter) checkNextNodeType(t NodeType) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// 获取表达式数据
+func (n *NodeRouter) getExpData() []byte {
+	r := map[string]interface{}{
+		"input": n.inputData,
+		"flow":  n.flowInstance,
+		"node":  n.nodeInstance,
+	}
+	b, _ := json.Marshal(r)
+	return b
 }

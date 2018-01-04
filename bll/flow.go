@@ -78,6 +78,13 @@ func (a *Flow) CreateNodeInstance(flowInstanceID, nodeID string, inputData []byt
 
 // DoneNodeInstance 完成节点实例
 func (a *Flow) DoneNodeInstance(nodeInstanceID, processor string, outData []byte) error {
+	nodeInstance, err := a.Models.Flow.GetNodeInstance(nodeInstanceID)
+	if err != nil {
+		return err
+	} else if nodeInstance == nil || nodeInstance.Status == 2 {
+		return nil
+	}
+
 	info := map[string]interface{}{
 		"processor":    processor,
 		"process_time": time.Now().Unix(),
@@ -99,4 +106,50 @@ func (a *Flow) DoneFlowInstance(flowInstanceID string) error {
 		"status": 9,
 	}
 	return a.Models.Flow.UpdateFlowInstance(flowInstanceID, info)
+}
+
+// LaunchFlowInstance 发起流程实例
+func (a *Flow) LaunchFlowInstance(flowCode, nodeCode, launcher string, inputData []byte) (*schema.NodeInstances, error) {
+	flow, err := a.Models.Flow.GetFlowByCode(flowCode)
+	if err != nil {
+		return nil, err
+	} else if flow == nil {
+		return nil, nil
+	}
+
+	node, err := a.Models.Flow.GetNodeByCode(flow.RecordID, nodeCode)
+	if err != nil {
+		return nil, err
+	} else if node == nil {
+		return nil, nil
+	}
+
+	flowInstance := &schema.FlowInstances{
+		RecordID:   util.UUID(),
+		FlowID:     flow.RecordID,
+		Launcher:   launcher,
+		LaunchTime: time.Now().Unix(),
+		Status:     1,
+		Created:    time.Now().Unix(),
+	}
+
+	nodeInstance := &schema.NodeInstances{
+		RecordID:  util.UUID(),
+		NodeID:    node.RecordID,
+		InputData: string(inputData),
+		Status:    1,
+		Created:   flowInstance.Created,
+	}
+
+	err = a.Models.Flow.CreateFlowInstance(flowInstance, nodeInstance)
+	if err != nil {
+		return nil, err
+	}
+
+	return nodeInstance, nil
+}
+
+// QueryNodeCandidates 查询节点候选人
+func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandidates, error) {
+	return a.Models.Flow.QueryNodeCandidates(nodeInstanceID)
 }

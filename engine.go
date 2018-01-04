@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"gitee.com/antlinker/flow/bll"
 	"gitee.com/antlinker/flow/schema"
 	"gitee.com/antlinker/flow/util"
@@ -117,20 +119,66 @@ type HandleResult struct {
 	NextNodes []*NextNode // 下一处理节点
 }
 
+// NextNode 下一节点
+type NextNode struct {
+	Node         *schema.FlowNodes // 节点信息
+	CandidateIDs []string          // 节点候选人
+}
+
+func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+	var result HandleResult
+
+	var onNextNode = OnNextNodeOption(func(node *schema.FlowNodes, nodeInstance *schema.NodeInstances, nodeCandidates []*schema.NodeCandidates) {
+		var cids []string
+		for _, nc := range nodeCandidates {
+			cids = append(cids, nc.CandidateID)
+		}
+
+		result.NextNodes = append(result.NextNodes, &NextNode{
+			Node:         node,
+			CandidateIDs: cids,
+		})
+	})
+
+	var onFlowEnd = OnFlowEndOption(func(_ *schema.FlowInstances) {
+		result.IsEnd = true
+	})
+
+	nr, err := new(NodeRouter).Init(e, nodeInstanceID, inputData, onNextNode, onFlowEnd)
+	if err != nil {
+		return nil, err
+	}
+
+	err = nr.Next(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, nil
+}
+
 // StartFlow 启动流程
 // flowCode 流程编号
+// nodeCode 开始节点编号
 // userID 发起人
-// input 输入数据
-func (e *Engine) StartFlow(flowCode, userID string, input interface{}) (*HandleResult, error) {
-	return nil, nil
+// inputData 输入数据
+func (e *Engine) StartFlow(flowCode, nodeCode, userID string, inputData []byte) (*HandleResult, error) {
+	nodeInstance, err := e.flowBll.LaunchFlowInstance(flowCode, nodeCode, userID, inputData)
+	if err != nil {
+		return nil, err
+	} else if nodeInstance == nil {
+		return nil, errors.New("未找到流程信息")
+	}
+
+	return e.nextFlowHandle(nodeInstance.RecordID, userID, inputData)
 }
 
 // HandleFlow 处理流程节点
 // nodeInstanceID 节点实例内码
 // userID 处理人
-// input 输入数据
-func (e *Engine) HandleFlow(nodeInstanceID, userID string, input interface{}) (*HandleResult, error) {
-	return nil, nil
+// inputData 输入数据
+func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+	return e.nextFlowHandle(nodeInstanceID, userID, inputData)
 }
 
 // QueryTodoFlows 查询待办流程数据

@@ -126,6 +126,21 @@ func (a *Flow) GetNode(recordID string) (*schema.FlowNodes, error) {
 	return &item, nil
 }
 
+// GetNodeByCode 根据节点编号获取流程节点
+func (a *Flow) GetNodeByCode(flowID, nodeCode string) (*schema.FlowNodes, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_id=? AND code=? ORDER BY order_num", schema.FlowNodesTableName)
+
+	var items []*schema.FlowNodes
+	_, err := a.db.Select(&items, query, flowID, nodeCode)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据节点编号获取流程节点发生错误")
+	} else if len(items) == 0 {
+		return nil, nil
+	}
+
+	return items[0], nil
+}
+
 // GetFlowInstance 获取流程实例
 func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstances, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.FlowInstancesTableName)
@@ -244,4 +259,51 @@ func (a *Flow) UpdateFlowInstance(recordID string, info map[string]interface{}) 
 		return errors.Wrapf(err, "更新流程实例信息发生错误")
 	}
 	return nil
+}
+
+// CreateFlowInstance 创建流程实例
+func (a *Flow) CreateFlowInstance(flowInstance *schema.FlowInstances, nodeInstances ...*schema.NodeInstances) error {
+	tran, err := a.db.Begin()
+	if err != nil {
+		return errors.Wrapf(err, "创建流程实例开启事物发生错误")
+	}
+
+	err = tran.Insert(flowInstance)
+	if err != nil {
+		err = tran.Rollback()
+		if err != nil {
+			return errors.Wrapf(err, "创建流程实例回滚事物发生错误")
+		}
+		return errors.Wrapf(err, "插入流程实例数据发生错误")
+	}
+
+	for _, n := range nodeInstances {
+		err = tran.Insert(n)
+		if err != nil {
+			err = tran.Rollback()
+			if err != nil {
+				return errors.Wrapf(err, "创建流程实例回滚事物发生错误")
+			}
+			return errors.Wrapf(err, "插入流程节点实例数据发生错误")
+		}
+	}
+
+	err = tran.Commit()
+	if err != nil {
+		return errors.Wrapf(err, "创建流程实例提交事物发生错误")
+	}
+	return nil
+}
+
+// QueryNodeCandidates 查询节点候选人
+func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandidates, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND node_instance_id=?", schema.NodeCandidatesTableName)
+
+	var items []*schema.NodeCandidates
+	_, err := a.db.Select(&items, query, nodeInstanceID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询节点候选人发生错误")
+	}
+
+	return items, nil
 }
