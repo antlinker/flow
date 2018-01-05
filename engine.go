@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -147,6 +148,11 @@ func (e *Engine) LoadFile(name string) error {
 type HandleResult struct {
 	IsEnd     bool        // 是否结束
 	NextNodes []*NextNode // 下一处理节点
+}
+
+func (r *HandleResult) String() string {
+	b, _ := json.Marshal(r)
+	return string(b)
 }
 
 // NextNode 下一节点

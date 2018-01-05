@@ -12,6 +12,3 @@
 
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
-
-# binary
-/examples/leave-example
