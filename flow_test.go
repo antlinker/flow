@@ -144,3 +144,59 @@ func TestLeaveBzrApprovalBack(t *testing.T) {
 		t.Fatalf("无效的处理结果：%s", result.String())
 	}
 }
+
+func TestLeaveFdyApprovalPass(t *testing.T) {
+	var (
+		flowCode = "process_leave_test"
+		launcher = "T001"
+		bzr      = "T002"
+		fdy      = "T003"
+	)
+
+	input := map[string]interface{}{
+		"day": 3,
+		"bzr": bzr,
+		"fdy": fdy,
+	}
+
+	// 开始流程
+	result, err := flow.StartFlow(flowCode, "node_start", launcher, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if result.NextNodes[0].CandidateIDs[0] != bzr {
+		t.Fatalf("无效的下一级流转：%s", result.String())
+	}
+
+	// 查询待办
+	todos, err := flow.QueryTodoFlows(flowCode, bzr)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程（通过）
+	input["action"] = "pass"
+	result, err = flow.HandleFlow(todos[0].RecordID, bzr, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 查询待办
+	todos, err = flow.QueryTodoFlows(flowCode, fdy)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程（通过）
+	input["action"] = "pass"
+	result, err = flow.HandleFlow(todos[0].RecordID, fdy, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 流程结束
+	if !result.IsEnd {
+		t.Fatalf("无效的处理结果：%s", result.String())
+	}
+}
