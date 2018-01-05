@@ -20,7 +20,6 @@ func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, er
 	result := &ParseResult{}
 	var err error
 
-	//time.Now()
 	doc := etree.NewDocument()
 	if err := doc.ReadFromBytes(content); err != nil {
 		panic(err)
@@ -48,9 +47,26 @@ func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, er
 	// 遍历找到所有的节点，因为是解析一个树，所以先解析节点，再解析sequenceFlow部分
 	// 解析sequenceFlow部分时，nodeMap里面应该已经有对应的nodeId了
 	for _, element := range process.ChildElements() {
-		if element.Tag == "documentation" || element.Tag == "extensionElements" {
+		if element.Tag == "documentation" ||
+			element.Tag == "extensionElements" ||
+			element.Tag == "sequenceFlow" {
 			continue
-		} else if element.Tag == "sequenceFlow" {
+		}
+		node, _ := p.ParseNode(element)
+		var nodeResult NodeResult
+		nodeResult.NodeID = node.Code
+		nodeResult.NodeName = node.Name
+		nodeResult.NodeType, err = GetNodeTypeByName(node.Type)
+		if err != nil {
+			return nil, err
+		}
+		nodeResult.CandidateExpressions = node.CandidateUsers
+		nodeMap[nodeResult.NodeID] = &nodeResult
+		// 如果节点是一个路由的话，需要特殊处理
+	}
+
+	for _, element := range process.ChildElements() {
+		if element.Tag == "sequenceFlow" {
 			sequenceFlow, _ := p.ParsesequenceFlow(element)
 			var routerResult RouterResult
 			routerResult.Expression = sequenceFlow.Expression
@@ -59,18 +75,6 @@ func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, er
 			if nodeResult, exist := nodeMap[sequenceFlow.SourceRef]; exist {
 				nodeResult.Routers = append(nodeResult.Routers, &routerResult)
 			}
-		} else {
-			node, _ := p.ParseNode(element)
-			var nodeResult NodeResult
-			nodeResult.NodeID = node.Code
-			nodeResult.NodeName = node.Name
-			nodeResult.NodeType, err = GetNodeTypeByName(node.Type)
-			if err != nil {
-				return nil, err
-			}
-			nodeResult.CandidateExpressions = node.CandidateUsers
-			nodeMap[nodeResult.NodeID] = &nodeResult
-			// 如果节点是一个路由的话，需要特殊处理
 		}
 	}
 
@@ -84,6 +88,13 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 	var node nodeInfo
 
 	node.Type = element.Tag
+	if node.Type == "endEvent" {
+		for _, e := range element.ChildElements() {
+			if e.Tag == "terminateEventDefinition" {
+				node.Type = "terminateEvent"
+			}
+		}
+	}
 	if name := element.SelectAttr("name"); name != nil {
 		node.Name = name.Value
 	}
@@ -106,7 +117,6 @@ func (p *xmlParser) ParsesequenceFlow(element *etree.Element) (*sequenceFlow, er
 	sequenceFlow.TargetRef = element.SelectAttr("targetRef").Value
 	for _, element := range element.ChildElements() {
 		if element.Tag == "documentation" {
-
 			sequenceFlow.Explain = element.Text()
 		} else if element.Tag == "conditionExpression" {
 			sequenceFlow.Expression = element.Text()
@@ -114,7 +124,7 @@ func (p *xmlParser) ParsesequenceFlow(element *etree.Element) (*sequenceFlow, er
 		}
 	}
 	if !hasExpression {
-		sequenceFlow.Expression = "true"
+		sequenceFlow.Expression = ""
 	}
 	return &sequenceFlow, nil
 }

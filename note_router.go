@@ -104,6 +104,21 @@ func (n *NodeRouter) Init(engine *Engine, nodeInstanceID string, inputData []byt
 	return n, nil
 }
 
+func (n *NodeRouter) next(nodeInstanceID, processor string) (*NodeRouter, error) {
+	nextRouter, err := new(NodeRouter).Init(n.engine, nodeInstanceID, n.inputData)
+	if err != nil {
+		return nil, err
+	}
+	nextRouter.opts = n.opts
+	nextRouter.parent = n
+
+	err = nextRouter.Next(processor)
+	if err != nil {
+		return nil, err
+	}
+	return nextRouter, nil
+}
+
 // Next 流向下一节点
 func (n *NodeRouter) Next(processor string) error {
 	nodeType, err := GetNodeTypeByName(n.node.TypeCode)
@@ -116,19 +131,19 @@ func (n *NodeRouter) Next(processor string) error {
 		if err != nil {
 			return err
 		}
-		if pNodeType == StartEvent && n.parent.opts.autoStart {
-			return n.Next(processor)
+
+		if !(pNodeType == StartEvent && n.parent.opts.autoStart) {
+			// 通知下一节点实例事件
+			if fn := n.opts.onNextNode; fn != nil {
+				candidates, err := n.engine.flowBll.QueryNodeCandidates(n.nodeInstance.RecordID)
+				if err != nil {
+					return err
+				}
+				fn(n.node, n.nodeInstance, candidates)
+			}
+			return nil
 		}
 
-		// 通知下一节点实例事件
-		if fn := n.opts.onNextNode; fn != nil {
-			candidates, err := n.engine.flowBll.QueryNodeCandidates(n.nodeInstance.RecordID)
-			if err != nil {
-				return err
-			}
-			fn(n.node, n.nodeInstance, candidates)
-		}
-		return nil
 	}
 
 	// 完成当前节点
@@ -194,14 +209,7 @@ func (n *NodeRouter) Next(processor string) error {
 	}
 
 	for _, instanceID := range nodeInstanceIDs {
-		nextRouter, err := new(NodeRouter).Init(n.engine, instanceID, n.inputData)
-		if err != nil {
-			return err
-		}
-		nextRouter.opts = n.opts
-		nextRouter.parent = n
-
-		err = nextRouter.Next(processor)
+		nextRouter, err := n.next(instanceID, processor)
 		if err != nil {
 			return err
 		}

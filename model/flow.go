@@ -244,7 +244,7 @@ func (a *Flow) UpdateNodeInstance(recordID string, info map[string]interface{}) 
 
 // CheckFlowInstanceTodo 检查流程实例待办事项
 func (a *Flow) CheckFlowInstanceTodo(flowInstanceID string) (bool, error) {
-	query := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted=0 AND flow_instance_id=?", schema.NodeInstancesTableName)
+	query := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted=0 AND status=1 AND flow_instance_id=?", schema.NodeInstancesTableName)
 	n, err := a.db.SelectInt(query, flowInstanceID)
 	if err != nil {
 		return false, errors.Wrapf(err, "检查流程待办事项发生错误")
@@ -311,10 +311,14 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 // QueryTodoNodeInstances 查询用户的待办节点实例数据
 func (a *Flow) QueryTodoNodeInstances(flowID, userID string) ([]*schema.NodeInstances, error) {
 	query := fmt.Sprintf(`
-SELECT * FROM %s
-WHERE deleted=0 AND status=1
-AND record_id IN(SELECT * FROM %s WHERE deleted=0 AND candidate_id=?)
-AND flow_instance_id IN(SELECT * FROM %s WHERE deleted=0 AND status=1 AND flow_id=?)
+SELECT *
+FROM %s
+WHERE deleted = 0 AND status = 1 AND record_id IN (SELECT node_instance_id
+                                                   FROM %s
+                                                   WHERE deleted = 0 AND candidate_id = ?) AND
+      flow_instance_id IN (SELECT record_id
+                           FROM %s
+                           WHERE deleted = 0 AND status = 1 AND flow_id = ?)
 		`, schema.NodeInstancesTableName, schema.NodeCandidatesTableName, schema.FlowInstancesTableName)
 
 	var items []*schema.NodeInstances

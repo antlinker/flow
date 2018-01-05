@@ -106,17 +106,6 @@ func (e *Engine) LoadFile(name string) error {
 			Created:  flow.Created,
 		}
 
-		for _, r := range n.Routers {
-			nodeRouters = append(nodeRouters, &schema.NodeRouters{
-				RecordID:     util.UUID(),
-				SourceNodeID: node.RecordID,
-				TargetNodeID: r.TargetNodeID,
-				Expression:   r.Expression,
-				Explain:      r.Explain,
-				Created:      flow.Created,
-			})
-		}
-
 		for _, exp := range n.CandidateExpressions {
 			nodeAssigns = append(nodeAssigns, &schema.NodeAssignments{
 				RecordID:   util.UUID(),
@@ -127,6 +116,28 @@ func (e *Engine) LoadFile(name string) error {
 		}
 
 		nodes[i] = node
+	}
+
+	var getNodeRecordID = func(nodeCode string) string {
+		for _, n := range nodes {
+			if n.Code == nodeCode {
+				return n.RecordID
+			}
+		}
+		return ""
+	}
+
+	for _, n := range result.Nodes {
+		for _, r := range n.Routers {
+			nodeRouters = append(nodeRouters, &schema.NodeRouters{
+				RecordID:     util.UUID(),
+				SourceNodeID: getNodeRecordID(n.NodeID),
+				TargetNodeID: getNodeRecordID(r.TargetNodeID),
+				Expression:   r.Expression,
+				Explain:      r.Explain,
+				Created:      flow.Created,
+			})
+		}
 	}
 
 	return e.flowBll.CreateFlowBasic(flow, nodes, nodeRouters, nodeAssigns)

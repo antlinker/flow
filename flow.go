@@ -1,6 +1,8 @@
 package flow
 
 import (
+	"encoding/json"
+
 	"gitee.com/antlinker/flow/schema"
 	"gitee.com/antlinker/flow/service/db"
 )
@@ -37,16 +39,24 @@ func LoadFile(name string) error {
 // flowCode 流程编号
 // nodeCode 开始节点编号
 // userID 发起人
-// inputData 输入数据
-func StartFlow(flowCode, nodeCode, userID string, inputData []byte) (*HandleResult, error) {
+// input 输入数据
+func StartFlow(flowCode, nodeCode, userID string, input interface{}) (*HandleResult, error) {
+	inputData, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
+	}
 	return engine.StartFlow(flowCode, nodeCode, userID, inputData)
 }
 
 // HandleFlow 处理流程节点
 // nodeInstanceID 节点实例内码
 // userID 处理人
-// inputData 输入数据
-func HandleFlow(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+// input 输入数据
+func HandleFlow(nodeInstanceID, userID string, input interface{}) (*HandleResult, error) {
+	inputData, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
+	}
 	return engine.HandleFlow(nodeInstanceID, userID, inputData)
 }
 

@@ -134,11 +134,12 @@ func (a *Flow) LaunchFlowInstance(flowCode, nodeCode, launcher string, inputData
 	}
 
 	nodeInstance := &schema.NodeInstances{
-		RecordID:  util.UUID(),
-		NodeID:    node.RecordID,
-		InputData: string(inputData),
-		Status:    1,
-		Created:   flowInstance.Created,
+		RecordID:       util.UUID(),
+		FlowInstanceID: flowInstance.RecordID,
+		NodeID:         node.RecordID,
+		InputData:      string(inputData),
+		Status:         1,
+		Created:        flowInstance.Created,
 	}
 
 	err = a.Models.Flow.CreateFlowInstance(flowInstance, nodeInstance)
