@@ -10,7 +10,7 @@
       <bpmn:outgoing>SequenceFlow_1wluadc</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="SequenceFlow_1wluadc" sourceRef="node_start" targetRef="node_user_apply" />
-    <bpmn:userTask id="node_user_apply" name="填写请假申请">
+    <bpmn:userTask id="node_user_apply" name="填写请假申请" camunda:candidateUsers="[]string{flow.launcher}">
       <bpmn:incoming>SequenceFlow_1wluadc</bpmn:incoming>
       <bpmn:incoming>SequenceFlow_0yjkvst</bpmn:incoming>
       <bpmn:incoming>SequenceFlow_015e8n6</bpmn:incoming>
@@ -91,7 +91,7 @@
     </bpmn:exclusiveGateway>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="process_leave">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="process_leave_test">
       <bpmndi:BPMNShape id="StartEvent_1e9eexa_di" bpmnElement="node_start">
         <dc:Bounds x="280" y="138" width="36" height="36" />
         <bpmndi:BPMNLabel>
