@@ -15,7 +15,7 @@
     exp.ScriptImportAlias("sql/sql.ql", "sql")
 
     // 这样就可以在脚本中使用 sql.Query(query,args...) sql.Count(query,args...) sql.One(query,args...) 三个函数
-    // 也可以使用sqlctx.QueryDB(db,ctx,query,args) sqlctx.CountDB(db,ctx,query,args) sqlctx.OneDB(db,ctx,query,args)
+    // 也可以使用sqlctx.QueryDB(ctx,db,query,args) sqlctx.CountDB(ctx,db,query,args) sqlctx.OneDB(ctx,db,query,args)
     // 也可以使用sqlctx.Query(ctx,query,args) sqlctx.Count(ctx,query,args) sqlctx.One(ctx,query,args)
 
 
