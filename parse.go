@@ -1,16 +1,20 @@
 package flow
 
+import (
+	"context"
+)
+
 // Parser 流程数据解析器
 type Parser interface {
 	// 解析流程定义数据
-	Parse(data []byte) (*ParseResult, error)
+	Parse(ctx context.Context, data []byte) (*ParseResult, error)
 }
 
 // ParseResult 流程数据解析结果
 type ParseResult struct {
 	FlowID      string        // 流程ID
 	FlowName    string        // 流程名称
-	FlowVersion string        // 流程版本号
+	FlowVersion int64         // 流程版本号
 	Nodes       []*NodeResult // 节点数据
 }
 
@@ -18,7 +22,7 @@ type ParseResult struct {
 type NodeResult struct {
 	NodeID               string          // 节点ID
 	NodeName             string          // 节点名称
-	NodeType             string          // 节点类型
+	NodeType             NodeType        // 节点类型
 	Routers              []*RouterResult // 节点路由
 	CandidateExpressions []string        // 候选人表达式
 }
