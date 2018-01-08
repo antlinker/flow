@@ -22,6 +22,11 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = flow.LoadFile("test_data/apply_sqltest.bpmn")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestLeaveBzrApprovalPass(t *testing.T) {
@@ -191,6 +196,60 @@ func TestLeaveFdyApprovalPass(t *testing.T) {
 	// 处理流程（通过）
 	input["action"] = "pass"
 	result, err = flow.HandleFlow(todos[0].RecordID, fdy, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 流程结束
+	if !result.IsEnd {
+		t.Fatalf("无效的处理结果：%s", result.String())
+	}
+}
+
+func TestApplySQLPass(t *testing.T) {
+	var (
+		flowCode = "process_apply_sqltest"
+	)
+
+	input := map[string]interface{}{
+		"form": "apply",
+	}
+
+	// 开始流程
+	result, err := flow.StartFlow(flowCode, "node_start", "A001", input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(result.NextNodes[0].CandidateIDs) != 2 {
+		t.Fatalf("无效的下一级流转：%s", result.String())
+	}
+
+	// 查询待办
+	todos, err := flow.QueryTodoFlows(flowCode, "A002")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if len(todos) != 1 {
+		bts, _ := json.Marshal(todos)
+		t.Fatalf("无效的待办数据:%s", string(bts))
+	}
+
+	// 查询待办
+	todos, err = flow.QueryTodoFlows(flowCode, "A003")
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	if len(todos) != 1 {
+		bts, _ := json.Marshal(todos)
+		t.Fatalf("无效的待办数据:%s", string(bts))
+	}
+
+	// 处理流程（通过）
+	input["action"] = "pass"
+	result, err = flow.HandleFlow(todos[0].RecordID, "A003", input)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

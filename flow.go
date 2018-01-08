@@ -3,6 +3,7 @@ package flow
 import (
 	"encoding/json"
 
+	"gitee.com/antlinker/flow/expression/sql"
 	"gitee.com/antlinker/flow/schema"
 	"gitee.com/antlinker/flow/service/db"
 )
@@ -18,6 +19,7 @@ func Init(dbConfig *db.Config) {
 		panic(err)
 	}
 	engine = new(Engine).Init(db, NewXMLParser(), NewQLangExecer())
+	sql.Reg(db.Db)
 }
 
 // SetParser 设定解析器
