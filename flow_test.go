@@ -10,6 +10,7 @@ import (
 )
 
 func init() {
+
 	flow.Init(&db.Config{
 		DSN:          "root:123456@tcp(192.168.1.36:3306)/flows?charset=utf8",
 		Trace:        true,
