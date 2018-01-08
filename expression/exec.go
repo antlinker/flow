@@ -39,7 +39,7 @@ func (e execExp) Exec(ctx ExpContext, exp string) (out *OutData, err error) {
 
 	ql := qlangFromContext(ctx)
 	ql.SetLibs(e.libs)
-	ql.SetVar("_ctx_", ctx)
+	ql.SetVar("__ctx__", ctx)
 	resultKey, expdata := e.parse(ctx, exp)
 
 	ok := make(chan struct{})
