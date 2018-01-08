@@ -27,6 +27,11 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	err = flow.LoadFile("test_data/parallel_test.bpmn")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestLeaveBzrApprovalPass(t *testing.T) {
@@ -221,35 +226,34 @@ func TestApplySQLPass(t *testing.T) {
 		t.Fatal(err.Error())
 	}
 
-	if len(result.NextNodes[0].CandidateIDs) != 2 {
+	cIDs := result.NextNodes[0].CandidateIDs
+	if len(cIDs) != 2 {
 		t.Fatalf("无效的下一级流转：%s", result.String())
 	}
 
-	// 查询待办
-	todos, err := flow.QueryTodoFlows(flowCode, "A002")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
+	var (
+		nodeInstanceID string
+		userID         string
+	)
+	for _, cid := range cIDs {
+		// 查询待办
+		todos, err := flow.QueryTodoFlows(flowCode, cid)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
 
-	if len(todos) != 1 {
-		bts, _ := json.Marshal(todos)
-		t.Fatalf("无效的待办数据:%s", string(bts))
-	}
+		if len(todos) != 1 {
+			bts, _ := json.Marshal(todos)
+			t.Fatalf("无效的待办数据:%s", string(bts))
+		}
 
-	// 查询待办
-	todos, err = flow.QueryTodoFlows(flowCode, "A003")
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	if len(todos) != 1 {
-		bts, _ := json.Marshal(todos)
-		t.Fatalf("无效的待办数据:%s", string(bts))
+		nodeInstanceID = todos[0].RecordID
+		userID = cid
 	}
 
 	// 处理流程（通过）
 	input["action"] = "pass"
-	result, err = flow.HandleFlow(todos[0].RecordID, "A003", input)
+	result, err = flow.HandleFlow(nodeInstanceID, userID, input)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -258,4 +262,56 @@ func TestApplySQLPass(t *testing.T) {
 	if !result.IsEnd {
 		t.Fatalf("无效的处理结果：%s", result.String())
 	}
+}
+
+func TestParallel(t *testing.T) {
+	var (
+		flowCode = "process_parallel_test"
+	)
+
+	input := map[string]interface{}{
+		"form": "countersign",
+	}
+
+	// 开始流程
+	result, err := flow.StartFlow(flowCode, "node_start", "H001", input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if len(result.NextNodes) != 3 {
+		t.Fatalf("无效的下一级流转：%s", result.String())
+	}
+
+	for i, node := range result.NextNodes {
+		if len(node.CandidateIDs) != 1 {
+			t.Fatalf("无效的节点处理人：%v", node.CandidateIDs)
+		}
+
+		todos, err := flow.QueryTodoFlows(flowCode, node.CandidateIDs[0])
+		if err != nil {
+			t.Fatalf(err.Error())
+		} else if len(todos) != 1 {
+			bts, _ := json.Marshal(todos)
+			t.Fatalf("无效的待办数据:%s", string(bts))
+		}
+
+		input["sign"] = node.CandidateIDs[0]
+		result, err := flow.HandleFlow(todos[0].RecordID, node.CandidateIDs[0], input)
+		if err != nil {
+			t.Fatalf(err.Error())
+		}
+
+		if i == 2 {
+			if !result.IsEnd {
+				t.Fatalf("无效的处理结果：%s", result.String())
+			}
+			break
+		}
+
+		if result.IsEnd {
+			t.Fatalf("无效的处理结果：%s", result.String())
+		}
+	}
+
 }
