@@ -61,7 +61,7 @@ func QueryDB(db *sql.DB, ctx context.Context, query string, args ...interface{})
 		panic(fmt.Sprintf("查询失败:%s  %v ==> %v", query, args, err))
 	}
 	vals := make([]interface{}, len(cols))
-	for i, _ := range cols {
+	for i := range cols {
 		vals[i] = new(sql.RawBytes)
 	}
 	defer rows.Close()
@@ -72,8 +72,12 @@ func QueryDB(db *sql.DB, ctx context.Context, query string, args ...interface{})
 		}
 		vmap := make(map[string]interface{})
 		for i, col := range cols {
-			vmap[col] = vals[i]
-
+			var s string
+			rb, ok := vals[i].(*sql.RawBytes)
+			if ok {
+				s = string(*rb)
+			}
+			vmap[col] = s
 		}
 		out = append(out, vmap)
 	}
