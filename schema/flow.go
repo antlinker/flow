@@ -9,6 +9,10 @@ const (
 	FlowInstancesTableName   = "f_flow_instances"
 	NodeInstancesTableName   = "f_node_instances"
 	NodeCandidatesTableName  = "f_node_candidates"
+	FlowFormsTableName       = "f_flow_forms"
+	FormFieldsTableName      = "f_form_fields"
+	FieldPropertiesTableName = "f_field_properties"
+	FieldValidationTableName = "f_field_validation"
 )
 
 // Flows 流程表
@@ -21,6 +25,8 @@ type Flows struct {
 	TypeCode string `db:"type_code,size:50" structs:"type_code" json:"type_code"` // 流程类型编号
 	XML      string `db:"xml,size:1024" structs:"xml" json:"xml"`                 // XML数据
 	Memo     string `db:"memo,size:255" structs:"memo" json:"memo"`               // 流程备注
+	Flag     int64  `db:"flag" structs:"flag" json:"flag"`                        // 流程标志(1:主流程 2:子流程)
+	ParentID string `db:"parent_id,size:36" structs:"parent_id" json:"parent_id"` // 父级流程内码
 	Created  int64  `db:"created" structs:"created" json:"created"`               // 创建时间戳
 	Updated  int64  `db:"updated" structs:"updated" json:"updated"`               // 更新时间戳
 	Deleted  int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
@@ -104,4 +110,56 @@ type NodeCandidates struct {
 	Created        int64  `db:"created" structs:"created" json:"created"`                                    // 创建时间戳
 	Updated        int64  `db:"updated" structs:"updated" json:"updated"`                                    // 更新时间戳
 	Deleted        int64  `db:"deleted" structs:"deleted" json:"deleted"`                                    // 删除时间戳
+}
+
+// FlowForms 流程表单表
+type FlowForms struct {
+	ID       int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`     // 唯一标识(自增ID)
+	RecordID string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 记录内码(uuid)
+	FlowID   string `db:"flow_id,size:36" structs:"flow_id" json:"flow_id"`       // 流程内码(flows.record_id)
+	Code     string `db:"code,size:50" structs:"code" json:"code"`                // 表单编号(唯一)
+	Name     string `db:"name,size:50" structs:"name" json:"name"`                // 表单名称
+	TypeCode string `db:"type_code,size:50" structs:"type_code" json:"type_code"` // 表单类型(URL:表单链接路径 META:表单元数据)
+	Data     string `db:"data,size:1024" structs:"data" json:"data"`              // 表单数据
+	Created  int64  `db:"created" structs:"created" json:"created"`               // 创建时间戳
+	Updated  int64  `db:"updated" structs:"updated" json:"updated"`               // 更新时间戳
+	Deleted  int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
+}
+
+// FormFields 表单字段表
+type FormFields struct {
+	ID           int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                  // 唯一标识(自增ID)
+	RecordID     string `db:"record_id,size:36" structs:"record_id" json:"record_id"`              // 记录内码(uuid)
+	FormID       string `db:"form_id,size:36" structs:"form_id" json:"form_id"`                    // 表单内码(flow_forms.record_id)
+	Code         string `db:"code,size:50" structs:"code" json:"code"`                             // 字段编号
+	Label        string `db:"label,size:50" structs:"label" json:"label"`                          // 字段标签
+	TypeCode     string `db:"type_code,size:50" structs:"type_code" json:"type_code"`              // 字段类型
+	DefaultValue string `db:"default_value,size:100" structs:"default_value" json:"default_value"` // 字段默认值
+	Created      int64  `db:"created" structs:"created" json:"created"`                            // 创建时间戳
+	Updated      int64  `db:"updated" structs:"updated" json:"updated"`                            // 更新时间戳
+	Deleted      int64  `db:"deleted" structs:"deleted" json:"deleted"`                            // 删除时间戳
+}
+
+// FieldProperties 字段属性表
+type FieldProperties struct {
+	ID       int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`     // 唯一标识(自增ID)
+	RecordID string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 记录内码(uuid)
+	FieldID  string `db:"field_id,size:36" structs:"field_id" json:"field_id"`    // 字段内码(form_fields.record_id)
+	Code     string `db:"code,size:50" structs:"code" json:"code"`                // 属性编号
+	Value    string `db:"value,size:100" structs:"value" json:"value"`            // 属性值
+	Created  int64  `db:"created" structs:"created" json:"created"`               // 创建时间戳
+	Updated  int64  `db:"updated" structs:"updated" json:"updated"`               // 更新时间戳
+	Deleted  int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
+}
+
+// FieldValidation 字段校验表
+type FieldValidation struct {
+	ID               int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                              // 唯一标识(自增ID)
+	RecordID         string `db:"record_id,size:36" structs:"record_id" json:"record_id"`                          // 记录内码(uuid)
+	FieldID          string `db:"field_id,size:36" structs:"field_id" json:"field_id"`                             // 字段内码(form_fields.record_id)
+	ConstraintName   string `db:"constraint_name,size:50" structs:"constraint_name" json:"constraint_name"`        // 约束名称
+	ConstraintConfig string `db:"constraint_config,size:100" structs:"constraint_config" json:"constraint_config"` // 约束配置
+	Created          int64  `db:"created" structs:"created" json:"created"`                                        // 创建时间戳
+	Updated          int64  `db:"updated" structs:"updated" json:"updated"`                                        // 更新时间戳
+	Deleted          int64  `db:"deleted" structs:"deleted" json:"deleted"`                                        // 删除时间戳
 }

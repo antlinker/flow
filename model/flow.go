@@ -23,13 +23,18 @@ func (a *Flow) Init(db *db.DB) *Flow {
 	db.AddTableWithName(schema.FlowInstances{}, schema.FlowInstancesTableName)
 	db.AddTableWithName(schema.NodeInstances{}, schema.NodeInstancesTableName)
 	db.AddTableWithName(schema.NodeCandidates{}, schema.NodeCandidatesTableName)
+	db.AddTableWithName(schema.FlowForms{}, schema.FlowFormsTableName)
+	db.AddTableWithName(schema.FormFields{}, schema.FormFieldsTableName)
+	db.AddTableWithName(schema.FieldProperties{}, schema.FieldPropertiesTableName)
+	db.AddTableWithName(schema.FieldValidation{}, schema.FieldValidationTableName)
+
 	a.db = db
 	return a
 }
 
 // CheckFlowCode 检查流程编号是否存在
 func (a *Flow) CheckFlowCode(code string) (bool, error) {
-	query := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted=0 AND code=?", schema.FlowsTableName)
+	query := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted=0 AND flag=1 AND code=?", schema.FlowsTableName)
 
 	exists, err := a.db.CheckExists(query, code)
 	if err != nil {
@@ -96,7 +101,7 @@ func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, ro
 
 // GetFlowByCode 根据编号查询流程数据
 func (a *Flow) GetFlowByCode(code string) (*schema.Flows, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND code=?", schema.FlowsTableName)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flag=1 AND code=?", schema.FlowsTableName)
 
 	var flow schema.Flows
 	err := a.db.SelectOne(&flow, query, code)

@@ -19,6 +19,9 @@ func (a *Flow) CheckFlowCode(code string) (bool, error) {
 
 // CreateFlowBasic 创建流程基础数据
 func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, routers []*schema.NodeRouters, assignments []*schema.NodeAssignments) error {
+	if flow.Flag == 0 {
+		flow.Flag = 1
+	}
 	return a.Models.Flow.CreateFlowBasic(flow, nodes, routers, assignments)
 }
 
