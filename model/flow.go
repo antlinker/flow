@@ -32,17 +32,6 @@ func (a *Flow) Init(db *db.DB) *Flow {
 	return a
 }
 
-// CheckFlowCode 检查流程编号是否存在
-func (a *Flow) CheckFlowCode(code string) (bool, error) {
-	query := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted=0 AND flag=1 AND code=?", schema.FlowsTableName)
-
-	exists, err := a.db.CheckExists(query, code)
-	if err != nil {
-		return false, errors.Wrapf(err, "检查流程编号是否存在发生错误")
-	}
-	return exists, nil
-}
-
 // CreateFlowBasic 创建流程基础数据
 func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, routers []*schema.NodeRouters, assignments []*schema.NodeAssignments) error {
 	tran, err := a.db.Begin()
@@ -101,7 +90,7 @@ func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, ro
 
 // GetFlowByCode 根据编号查询流程数据
 func (a *Flow) GetFlowByCode(code string) (*schema.Flows, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flag=1 AND code=?", schema.FlowsTableName)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flag=1 AND code=? ORDER BY version DESC LIMIT 1", schema.FlowsTableName)
 
 	var flow schema.Flows
 	err := a.db.SelectOne(&flow, query, code)

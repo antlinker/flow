@@ -12,9 +12,9 @@ type Flow struct {
 	*Bll
 }
 
-// CheckFlowCode 检查流程编号是否存在
-func (a *Flow) CheckFlowCode(code string) (bool, error) {
-	return a.Models.Flow.CheckFlowCode(code)
+// GetFlowByCode 根据编号查询流程数据
+func (a *Flow) GetFlowByCode(code string) (*schema.Flows, error) {
+	return a.Models.Flow.GetFlowByCode(code)
 }
 
 // CreateFlowBasic 创建流程基础数据

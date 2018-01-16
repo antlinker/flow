@@ -73,12 +73,14 @@ func (e *Engine) LoadFile(name string) error {
 		return err
 	}
 
-	// 检查流程编号是否存在，如果存在则不处理
-	exists, err := e.flowBll.CheckFlowCode(result.FlowID)
+	// 检查流程是否存在，如果存在则检查版本号是否一致，如果不一致则创建新流程
+	oldFlow, err := e.flowBll.GetFlowByCode(result.FlowID)
 	if err != nil {
 		return err
-	} else if exists {
-		return nil
+	} else if oldFlow != nil {
+		if result.FlowVersion <= oldFlow.Version {
+			return nil
+		}
 	}
 
 	flow := &schema.Flows{
