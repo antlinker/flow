@@ -113,6 +113,7 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 			if err != nil {
 				return nil, err
 			}
+			node.FormResult = form
 		}
 	}
 	return &node, nil
@@ -140,60 +141,61 @@ func (p *xmlParser) ParsesequenceFlow(element *etree.Element) (*sequenceFlow, er
 }
 
 func (p *xmlParser) ParseFormData(element *etree.Element) (*NodeFormResult, error) {
-	var formResult *NodeFormResult
-	if id := element.SelectAttr("id"); id {
+	var formResult = &NodeFormResult{}
+	if id := element.SelectAttr("id"); id != nil {
 		formResult.ID = id.Value
 	}
 
-	if fieldList := element.SelectElements("formField"); fieldList {
+	if fieldList := element.SelectElements("formField"); fieldList != nil {
 		for _, item := range fieldList {
 			var field = &FormFieldResult{}
-			if properties := item.SelectElement("properties"); properties {
-				field.Properties, err := p.ParseProperties(properties)
-				if err := nil {
+			var err error
+			if properties := item.SelectElement("properties"); properties != nil {
+				field.Properties, err = p.ParseProperties(properties)
+				if err != nil {
 					return nil, err
 				}
 			}
-			if validations := item.SelectElement("validation"); validations {
-				field.Validations, err := p.ParseValidations(validations)
-				if err := nil {
+			if validations := item.SelectElement("validation"); validations != nil {
+				field.Validations, err = p.ParseValidations(validations)
+				if err != nil {
 					return nil, err
 				}
 			}
-			if nodeType := item.SelectAttr("type"); nodeType {
+			if nodeType := item.SelectAttr("type"); nodeType != nil {
 				field.Type = nodeType.Value
 				if field.Type == "enum" {
-					field.Values, err := p.ParseEnumValues(item)
-					if err := nil {
+					field.Values, err = p.ParseEnumValues(item)
+					if err != nil {
 						return nil, err
 					}
 				}
 			}
-			if id := item.SelectAttr("id"); id {
+			if id := item.SelectAttr("id"); id != nil {
 				field.ID = id.Value
 			}
-			if label := item.SelectAttr("label"); label {
+			if label := item.SelectAttr("label"); label != nil {
 				field.Label = label.Value
 			}
-			if defaultValue := item.SelectAttr("defaultValue"); defaultValue {
+			if defaultValue := item.SelectAttr("defaultValue"); defaultValue != nil {
 				field.DefaultValue = defaultValue.Value
 			}
-			formResult := append(formResult, field)
+			formResult.Fields = append(formResult.Fields, field)
 		}
 	}
 
-	return &sequenceFlow, nil
+	return formResult, nil
 }
 
 func (p *xmlParser) ParseProperties(element *etree.Element) ([]*FieldProperty, error) {
 	var properties = make([]*FieldProperty, 0)
-	if propertyList := element.SelectElements("property"); propertyList {
-		for _. item := range propertyList {
-			var property = & FieldProperty{}
-			if id := item.SelectAttr("id"); id {
+	if propertyList := element.SelectElements("property"); propertyList != nil {
+		for _, item := range propertyList {
+			var property = &FieldProperty{}
+			if id := item.SelectAttr("id"); id != nil {
 				property.ID = id.Value
 			}
-			if value := item.SelectAttr("value"); value {
+			if value := item.SelectAttr("value"); value != nil {
 				property.Value = value.Value
 			}
 			properties = append(properties, property)
@@ -204,13 +206,13 @@ func (p *xmlParser) ParseProperties(element *etree.Element) ([]*FieldProperty, e
 
 func (p *xmlParser) ParseValidations(element *etree.Element) ([]*FieldValidation, error) {
 	var validations = make([]*FieldValidation, 0)
-	if validationList := element.SelectElements("constraint"); validationList {
-		for _. item := range validationList {
-			var validation = & FieldValidation{}
-			if name := item.SelectAttr("name"); name {
+	if validationList := element.SelectElements("constraint"); validationList != nil {
+		for _, item := range validationList {
+			var validation = &FieldValidation{}
+			if name := item.SelectAttr("name"); name != nil {
 				validation.Name = name.Value
 			}
-			if config := item.SelectAttr("config"); config {
+			if config := item.SelectAttr("config"); config != nil {
 				validation.Config = config.Value
 			}
 			validations = append(validations, validation)
@@ -221,14 +223,14 @@ func (p *xmlParser) ParseValidations(element *etree.Element) ([]*FieldValidation
 
 func (p *xmlParser) ParseEnumValues(element *etree.Element) ([]*FieldOption, error) {
 	var options = make([]*FieldOption, 0)
-	if optionList := element.SelectElements("value"); optionList {
-		for _. item := range optionList {
-			var option = & FieldOption{}
-			if id := item.SelectAttr("id"); id {
+	if optionList := element.SelectElements("value"); optionList != nil {
+		for _, item := range optionList {
+			var option = &FieldOption{}
+			if id := item.SelectAttr("id"); id != nil {
 				option.ID = id.Value
 			}
-			if name := item.SelectAttr("name"); name {
-				option.Name = value.Value
+			if name := item.SelectAttr("name"); name != nil {
+				option.Name = name.Value
 			}
 			options = append(options, option)
 		}
