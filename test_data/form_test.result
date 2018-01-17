@@ -1,0 +1,99 @@
+{
+	"FlowID": "Process_1",
+	"FlowName": "",
+	"FlowVersion": 0,
+	"Nodes": [{
+		"NodeID": "StartEvent_1",
+		"NodeName": "",
+		"NodeType": "startEvent",
+		"Routers": [{
+			"TargetNodeID": "Task_1b1eha8",
+			"Explain": "",
+			"Expression": ""
+		}],
+		"CandidateExpressions": null,
+		"FlowResult": null,
+		"FormResult": null
+	}, {
+		"NodeID": "Task_1b1eha8",
+		"NodeName": "",
+		"NodeType": "userTask",
+		"Routers": [{
+			"TargetNodeID": "EndEvent_0h4y9rm",
+			"Explain": "",
+			"Expression": ""
+		}],
+		"CandidateExpressions": null,
+		"FlowResult": null,
+		"FormResult": {
+			"ID": "",
+			"Fields": [{
+				"ID": "id_1",
+				"Type": "string",
+				"Label": "label_1",
+				"DefaultValue": "default_1",
+				"Values": null,
+				"Validations": [{
+					"Name": "constraint_1",
+					"Config": "constraint_1_config"
+				}, {
+					"Name": "constraint_2",
+					"Config": "constraint_2_config"
+				}],
+				"Properties": [{
+					"ID": "Property_1",
+					"Value": "Property_1_value"
+				}, {
+					"ID": "Property_2",
+					"Value": "Property_2_value"
+				}]
+			}, {
+				"ID": "FormField_2",
+				"Type": "long",
+				"Label": "FormField_2_label",
+				"DefaultValue": "",
+				"Values": null,
+				"Validations": null,
+				"Properties": null
+			}, {
+				"ID": "FormField_3",
+				"Type": "date",
+				"Label": "",
+				"DefaultValue": "",
+				"Values": null,
+				"Validations": null,
+				"Properties": null
+			}, {
+				"ID": "FormField_4",
+				"Type": "enum",
+				"Label": "FormField_4_label",
+				"DefaultValue": "FormField_4_label_default",
+				"Values": [{
+					"ID": "Value_1",
+					"Name": "Value_1_value"
+				}, {
+					"ID": "Value_2",
+					"Name": "Value_2_value"
+				}],
+				"Validations": null,
+				"Properties": null
+			}, {
+				"ID": "FormField_5",
+				"Type": "boolean",
+				"Label": "",
+				"DefaultValue": "",
+				"Values": null,
+				"Validations": null,
+				"Properties": null
+			}]
+		}
+	}, {
+		"NodeID": "EndEvent_0h4y9rm",
+		"NodeName": "",
+		"NodeType": "endEvent",
+		"Routers": null,
+		"CandidateExpressions": null,
+		"FlowResult": null,
+		"FormResult": null
+	}]
+}

@@ -44,12 +44,13 @@ type NodeFormResult struct {
 
 // FormFieldResult 表单字段
 type FormFieldResult struct {
-	ID           string           // 字段ID
-	Type         string           // 字段类型
-	Label        string           // 字段标签
-	DefaultValue string           // 默认值
-	Validation   *FieldValidation // 字段验证
-	Property     *FieldProperty   // 字段属性
+	ID           string             // 字段ID
+	Type         string             // 字段类型
+	Label        string             // 字段标签
+	DefaultValue string             // 默认值
+	Values       []*FieldOption     // 枚举类型有一个列表
+	Validations  []*FieldValidation // 字段验证
+	Properties   []*FieldProperty   // 字段属性
 }
 
 // FieldValidation 字段验证
@@ -62,4 +63,10 @@ type FieldValidation struct {
 type FieldProperty struct {
 	ID    string // 属性ID
 	Value string // 属性值
+}
+
+// FieldOption 下拉选项
+type FieldOption struct {
+	ID   string // 属性ID
+	Name string // 属性值
 }
