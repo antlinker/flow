@@ -61,6 +61,8 @@ func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, er
 			return nil, err
 		}
 		nodeResult.CandidateExpressions = node.CandidateUsers
+		// yupengfei 2018-01-17 增加了form的解析
+		nodeResult.FormResult = node.FormResult
 		nodeMap[nodeResult.NodeID] = &nodeResult
 		// 如果节点是一个路由的话，需要特殊处理
 	}
@@ -105,6 +107,14 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 		candidateUserList := strings.Split(candidateUsers.Value, ";")
 		node.CandidateUsers = candidateUserList
 	}
+	if extensionElements := element.SelectElement("extensionElements"); extensionElements != nil {
+		if formData := extensionElements.SelectElement("formData"); formData != nil {
+			form, err := p.ParseFormData(formData)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	return &node, nil
 }
 
@@ -129,12 +139,110 @@ func (p *xmlParser) ParsesequenceFlow(element *etree.Element) (*sequenceFlow, er
 	return &sequenceFlow, nil
 }
 
+func (p *xmlParser) ParseFormData(element *etree.Element) (*NodeFormResult, error) {
+	var formResult *NodeFormResult
+	if id := element.SelectAttr("id"); id {
+		formResult.ID = id.Value
+	}
+
+	if fieldList := element.SelectElements("formField"); fieldList {
+		for _, item := range fieldList {
+			var field = &FormFieldResult{}
+			if properties := item.SelectElement("properties"); properties {
+				field.Properties, err := p.ParseProperties(properties)
+				if err := nil {
+					return nil, err
+				}
+			}
+			if validations := item.SelectElement("validation"); validations {
+				field.Validations, err := p.ParseValidations(validations)
+				if err := nil {
+					return nil, err
+				}
+			}
+			if nodeType := item.SelectAttr("type"); nodeType {
+				field.Type = nodeType.Value
+				if field.Type == "enum" {
+					field.Values, err := p.ParseEnumValues(item)
+					if err := nil {
+						return nil, err
+					}
+				}
+			}
+			if id := item.SelectAttr("id"); id {
+				field.ID = id.Value
+			}
+			if label := item.SelectAttr("label"); label {
+				field.Label = label.Value
+			}
+			if defaultValue := item.SelectAttr("defaultValue"); defaultValue {
+				field.DefaultValue = defaultValue.Value
+			}
+			formResult := append(formResult, field)
+		}
+	}
+
+	return &sequenceFlow, nil
+}
+
+func (p *xmlParser) ParseProperties(element *etree.Element) ([]*FieldProperty, error) {
+	var properties = make([]*FieldProperty, 0)
+	if propertyList := element.SelectElements("property"); propertyList {
+		for _. item := range propertyList {
+			var property = & FieldProperty{}
+			if id := item.SelectAttr("id"); id {
+				property.ID = id.Value
+			}
+			if value := item.SelectAttr("value"); value {
+				property.Value = value.Value
+			}
+			properties = append(properties, property)
+		}
+	}
+	return properties, nil
+}
+
+func (p *xmlParser) ParseValidations(element *etree.Element) ([]*FieldValidation, error) {
+	var validations = make([]*FieldValidation, 0)
+	if validationList := element.SelectElements("constraint"); validationList {
+		for _. item := range validationList {
+			var validation = & FieldValidation{}
+			if name := item.SelectAttr("name"); name {
+				validation.Name = name.Value
+			}
+			if config := item.SelectAttr("config"); config {
+				validation.Config = config.Value
+			}
+			validations = append(validations, validation)
+		}
+	}
+	return validations, nil
+}
+
+func (p *xmlParser) ParseEnumValues(element *etree.Element) ([]*FieldOption, error) {
+	var options = make([]*FieldOption, 0)
+	if optionList := element.SelectElements("value"); optionList {
+		for _. item := range optionList {
+			var option = & FieldOption{}
+			if id := item.SelectAttr("id"); id {
+				option.ID = id.Value
+			}
+			if name := item.SelectAttr("name"); name {
+				option.Name = value.Value
+			}
+			options = append(options, option)
+		}
+	}
+	return options, nil
+}
+
 type nodeInfo struct {
 	ProcessCode    string
 	Type           string
 	Code           string
 	Name           string
 	CandidateUsers []string
+	FormResult     *NodeFormResult
 }
 
 type sequenceFlow struct {
