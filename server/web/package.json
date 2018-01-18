@@ -12,6 +12,7 @@
     "bpmn-js-properties-panel": "^0.19.1",
     "camunda-bpmn-moddle": "^0.13.0",
     "dva": "^2.1.0",
+    "js-file-download": "^0.4.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0"
   },
