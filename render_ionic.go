@@ -14,7 +14,7 @@ func NewIonicRenderer() Renderer {
 type ionicRenderer struct {
 }
 
-func (p *ionicRenderer) Render(context.Context, *NodeFormResult) ([]byte, error) {
+func (p *ionicRenderer) Render(ctx context.Context, form *NodeFormResult) ([]byte, error) {
 	// content := page.CreateElement("ion-content")
 
 	return nil, nil
