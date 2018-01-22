@@ -2,7 +2,8 @@
 
 ## 工作流设计器
 
-[Camunda下载地址](https://camunda.com/download/modeler/)
+- [Camunda下载地址](https://camunda.com/download/modeler/)
+- [文档参考](https://docs.awspaas.com/reference-guide/aws-paas-process-reference-guide/process_structure/activities.html)
 
 ## 获取项目
 
@@ -53,7 +54,7 @@ func main() {
     input := map[string]interface{}{
 		"day": 1,
     }
-    
+
 	result, err := flow.StartFlow("流程编号", "开始节点编号", "流程发起人ID", input)
 	if err != nil {
 		// 处理错误

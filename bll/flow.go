@@ -168,3 +168,8 @@ func (a *Flow) QueryTodoNodeInstances(flowCode, userID string) ([]*schema.NodeIn
 	}
 	return a.Models.Flow.QueryTodoNodeInstances(flow.RecordID, userID)
 }
+
+// QueryFlowPage 查询流程分页数据
+func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
+	return a.Models.Flow.QueryFlowPage(params, pageIndex, pageSize)
+}

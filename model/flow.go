@@ -322,3 +322,41 @@ WHERE deleted = 0 AND status = 1 AND record_id IN (SELECT node_instance_id
 	}
 	return items, nil
 }
+
+// QueryFlowPage 查询流程分页数据
+func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
+	var (
+		where = "WHERE deleted=0"
+		args  []interface{}
+	)
+
+	if code := params.Code; code != "" {
+		where = fmt.Sprintf("%s AND code LIKE ?", where)
+		args = append(args, "%"+code+"%")
+	}
+
+	if name := params.Name; name != "" {
+		where = fmt.Sprintf("%s AND name LIKE ?", where)
+		args = append(args, "%"+name+"%")
+	}
+
+	n, err := a.db.SelectInt(fmt.Sprintf("SELECT count(*) FROM %s %s", schema.FlowsTableName, where), args...)
+	if err != nil {
+		return 0, nil, errors.Wrapf(err, "查询分页数据发生错误")
+	} else if n == 0 {
+		return 0, nil, nil
+	}
+
+	query := fmt.Sprintf("SELECT id,record_id,created,code,name,version FROM %s %s ORDER BY id DESC", schema.FlowsTableName, where)
+	if pageIndex > 0 && pageSize > 0 {
+		query = fmt.Sprintf("%s limit %d,%d", query, (pageIndex-1)*pageSize, pageSize)
+	}
+
+	var items []*schema.FlowQueryResult
+	_, err = a.db.Select(&items, query, args...)
+	if err != nil {
+		return 0, nil, errors.Wrapf(err, "查询分页数据发生错误")
+	}
+
+	return n, items, err
+}

@@ -2,6 +2,7 @@ package flow
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"gitee.com/antlinker/flow/expression/sql"
 	"gitee.com/antlinker/flow/schema"
@@ -67,4 +68,10 @@ func HandleFlow(nodeInstanceID, userID string, input interface{}) (*HandleResult
 // userID 待办人
 func QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstances, error) {
 	return engine.QueryTodoFlows(flowCode, userID)
+}
+
+// StartServer 启动管理服务
+func StartServer(opts ...ServerOption) http.Handler {
+	srv := new(Server).Init(engine, opts...)
+	return srv
 }

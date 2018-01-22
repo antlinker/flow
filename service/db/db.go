@@ -13,9 +13,6 @@ import (
 	"github.com/LyricTian/retry"
 	"github.com/pkg/errors"
 	"gopkg.in/gorp.v2"
-
-	// 引入mysql驱动
-	_ "github.com/go-sql-driver/mysql"
 )
 
 // 自定义数据库语句打印日志
