@@ -16,8 +16,6 @@ export default class FlowList extends PureComponent {
 
   onDelClick = id => {};
 
-  onCopyClick = id => {};
-
   onResetClick = e => {
     this.props.form.resetFields();
     this.props.dispatch({
@@ -117,15 +115,9 @@ export default class FlowList extends PureComponent {
         width: 240,
         render: val => (
           <div>
-            <Link to={`/flow/${val}`}>查看</Link>
+            <Link to={`/flow/view/${val}`}>查看</Link>
             <Divider type="vertical" />
-            <a
-              onClick={() => {
-                this.onCopyClick(val);
-              }}
-            >
-              复制
-            </a>
+            <Link to={`/flow/copy/${val}`}>复制</Link>
             <Divider type="vertical" />
             <a
               onClick={() => {
@@ -153,7 +145,7 @@ export default class FlowList extends PureComponent {
         <div className={styles.tableList}>
           <div className={styles.tableListForm}>{this.renderSearchForm()}</div>
           <div className={styles.tableListOperator}>
-            <Link to="/flow_designer">
+            <Link to="/flow/add">
               <Button icon="plus" type="primary">
                 新建
               </Button>

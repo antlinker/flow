@@ -13,3 +13,12 @@ export async function queryPage(params) {
     return response;
   });
 }
+
+export async function get(params) {
+  return request(`/flow/${params.record_id}`).then(response => {
+    if (isError(response)) {
+      return {};
+    }
+    return response;
+  });
+}

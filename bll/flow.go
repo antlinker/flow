@@ -12,6 +12,11 @@ type Flow struct {
 	*Bll
 }
 
+// GetFlow 获取流程数据
+func (a *Flow) GetFlow(recordID string) (*schema.Flows, error) {
+	return a.Models.Flow.GetFlow(recordID)
+}
+
 // GetFlowByCode 根据编号查询流程数据
 func (a *Flow) GetFlowByCode(code string) (*schema.Flows, error) {
 	return a.Models.Flow.GetFlowByCode(code)

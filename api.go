@@ -40,8 +40,8 @@ func (a *API) pageSize(ctx *gear.Context) uint {
 	return 10
 }
 
-// QueryPage 查询分页数据
-func (a *API) QueryPage(ctx *gear.Context) error {
+// QueryFlowPage 查询流程分页数据
+func (a *API) QueryFlowPage(ctx *gear.Context) error {
 	pageIndex, pageSize := a.pageIndex(ctx), a.pageSize(ctx)
 	params := schema.FlowQueryParam{
 		Code: ctx.Query("code"),
@@ -63,4 +63,13 @@ func (a *API) QueryPage(ctx *gear.Context) error {
 	}
 
 	return ctx.JSON(http.StatusOK, response)
+}
+
+// GetFlow 获取流程数据
+func (a *API) GetFlow(ctx *gear.Context) error {
+	item, err := a.engine.flowBll.GetFlow(ctx.Param("id"))
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	return ctx.JSON(http.StatusOK, item)
 }

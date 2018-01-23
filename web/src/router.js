@@ -18,7 +18,8 @@ function RouterConfig({history, app}) {
     <Router history={history}>
       <Switch>
         <Route path="/" exact={true} component={dynamicWrapper(app, ['flow'], 'FlowList')}/>
-        <Route path="/flow_designer" component={dynamicWrapper(app, ['flow'], 'FlowDesigner')}/>
+        <Route path="/flow/:action/:id" component={dynamicWrapper(app, ['flow'], 'FlowCard')}/>
+        <Route path="/flow/:action" component={dynamicWrapper(app, ['flow'], 'FlowCard')}/>
       </Switch>
     </Router>
   </LocaleProvider>);

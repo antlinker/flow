@@ -88,6 +88,22 @@ func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, ro
 	return nil
 }
 
+// GetFlow 获取流程数据
+func (a *Flow) GetFlow(recordID string) (*schema.Flows, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=? LIMIT 1", schema.FlowsTableName)
+
+	var flow schema.Flows
+	err := a.db.SelectOne(&flow, query, recordID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "获取流程数据发生错误")
+	}
+
+	return &flow, nil
+}
+
 // GetFlowByCode 根据编号查询流程数据
 func (a *Flow) GetFlowByCode(code string) (*schema.Flows, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flag=1 AND code=? ORDER BY version DESC LIMIT 1", schema.FlowsTableName)
