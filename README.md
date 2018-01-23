@@ -83,3 +83,22 @@ func main() {
 		// 处理错误
 	}
 ```
+
+### 6. 接入WEB流程管理
+
+```go
+func main() {
+	serverOptions := []flow.ServerOption{
+		flow.ServerStaticRootOption("./web"),
+		flow.ServerPrefixOption("/flow/"),
+		flow.ServerMiddlewareOption(filter),
+	}
+
+	http.Handle("/flow/", flow.StartServer(serverOptions...))
+}
+
+func filter(ctx *gear.Context) error {
+	fmt.Printf("请求参数：%s - %s \n", ctx.Path, ctx.Method)
+	return nil
+}
+```

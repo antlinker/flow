@@ -67,6 +67,11 @@ func (a *Server) Init(engine *Engine, opts ...ServerOption) *Server {
 	app := gear.New()
 
 	app.UseHandler(logging.Default())
+
+	for _, m := range a.opts.middlewares {
+		app.Use(m)
+	}
+
 	if a.opts.staticRoot != "" {
 		app.Use(newStaticMiddleware(a))
 	}
