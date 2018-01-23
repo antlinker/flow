@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"gitee.com/antlinker/flow/schema"
 	"gitee.com/antlinker/flow/service/db"
@@ -375,4 +376,43 @@ func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize u
 	}
 
 	return n, items, err
+}
+
+// DeleteFlow 删除流程
+func (a *Flow) DeleteFlow(flowID string) error {
+	tran, err := a.db.Begin()
+	if err != nil {
+		return errors.Wrapf(err, "删除流程开启事物发生错误")
+	}
+
+	ctimeUnix := time.Now().Unix()
+	_, err = tran.Exec(fmt.Sprintf("UPDATE %s SET deleted=? WHERE deleted=0 AND record_id=?", schema.FlowTableName), ctimeUnix, flowID)
+	if err != nil {
+		_ = tran.Rollback()
+		return errors.Wrapf(err, "删除流程发生错误")
+	}
+
+	_, err = tran.Exec(fmt.Sprintf("UPDATE %s SET deleted=? WHERE deleted=0 AND source_node_id IN(SELECT record_id FROM %s WHERE deleted=0 AND flow_id=?)", schema.NodeRouterTableName, schema.NodeTableName), ctimeUnix, flowID)
+	if err != nil {
+		_ = tran.Rollback()
+		return errors.Wrapf(err, "删除流程节点路由发生错误")
+	}
+
+	_, err = tran.Exec(fmt.Sprintf("UPDATE %s SET deleted=? WHERE deleted=0 AND node_id IN(SELECT record_id FROM %s WHERE deleted=0 AND flow_id=?)", schema.NodeAssignmentTableName, schema.NodeTableName), ctimeUnix, flowID)
+	if err != nil {
+		_ = tran.Rollback()
+		return errors.Wrapf(err, "删除流程节点指派发生错误")
+	}
+
+	_, err = tran.Exec(fmt.Sprintf("UPDATE %s SET deleted=? WHERE deleted=0 AND flow_id=?", schema.NodeTableName), ctimeUnix, flowID)
+	if err != nil {
+		_ = tran.Rollback()
+		return errors.Wrapf(err, "删除流程节点发生错误")
+	}
+
+	err = tran.Commit()
+	if err != nil {
+		return errors.Wrapf(err, "删除流程提交事物发生错误")
+	}
+	return nil
 }

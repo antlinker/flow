@@ -1,10 +1,21 @@
 import React, { PureComponent } from "react";
 import { connect } from "dva";
 import { Link } from "dva/router";
-import { Row, Col, Card, Form, Input, Button, Table, Divider } from "antd";
+import {
+  Row,
+  Col,
+  Card,
+  Form,
+  Input,
+  Button,
+  Table,
+  Divider,
+  Modal
+} from "antd";
 import { formatTimestamp } from "../utils/util";
 import styles from "./FlowList.less";
 
+const { confirm } = Modal;
 @connect(state => ({ flow: state.flow }))
 @Form.create()
 export default class FlowList extends PureComponent {
@@ -14,7 +25,23 @@ export default class FlowList extends PureComponent {
     });
   }
 
-  onDelClick = id => {};
+  onDelOKClick = id => {
+    this.props.dispatch({
+      type: "flow/delete",
+      payload: { record_id: id }
+    });
+  };
+
+  onDelClick = id => {
+    confirm({
+      title: "确认删除该流程吗？",
+      content: "删除该流程将会删除与流程相关的节点数据！",
+      okText: "确认",
+      okType: "danger",
+      cancelText: "取消",
+      onOk: this.onDelOKClick.bind(this, id)
+    });
+  };
 
   onResetClick = e => {
     this.props.form.resetFields();

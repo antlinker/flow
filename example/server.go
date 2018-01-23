@@ -23,7 +23,8 @@ func main() {
 	flag.Parse()
 
 	flow.Init(&db.Config{
-		DSN: "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
+		DSN:   "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
+		Trace: true,
 	})
 
 	serverOptions := []flow.ServerOption{

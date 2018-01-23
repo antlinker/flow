@@ -1,5 +1,6 @@
-import { notification } from "antd";
-import { queryPage, get } from "../services/flow";
+import { routerRedux } from "dva/router";
+import { notification, message } from "antd";
+import { queryPage, get, del, save } from "../services/flow";
 
 export default {
   namespace: "flow",
@@ -50,8 +51,6 @@ export default {
       });
     },
     *loadForm({ payload, bpmnModeler }, { call, put, select }) {
-      console.table(payload);
-
       yield [
         put({
           type: "saveBpmnModeler",
@@ -101,6 +100,31 @@ export default {
           }
         });
       }
+    },
+    *delete({ payload }, { call, put }) {
+      const response = yield call(del, payload);
+      if (response === "ok") {
+        message.success("删除成功");
+        yield put({
+          type: "fetch"
+        });
+      }
+    },
+    *submit({ payload }, { call, put, select }) {
+      yield put({
+        type: "changeSubmitting",
+        payload: true
+      });
+
+      const response = yield call(save, payload);
+      if (response === "ok") {
+        yield put({
+          type: "changeSubmitting",
+          payload: false
+        });
+        message.success("保存成功");
+        yield put(routerRedux.push("/"));
+      }
     }
   },
   reducers: {
@@ -127,6 +151,9 @@ export default {
     },
     saveFormData(state, action) {
       return { ...state, formData: action.payload };
+    },
+    changeSubmitting(state, action) {
+      return { ...state, submitting: action.payload };
     }
   }
 };

@@ -22,3 +22,16 @@ export async function get(params) {
     return response;
   });
 }
+
+export async function save(params) {
+  return request("/flow", {
+    method: "POST",
+    body: params
+  });
+}
+
+export async function del(params) {
+  return request(`/flow/${params.record_id}`, {
+    method: "DELETE"
+  });
+}

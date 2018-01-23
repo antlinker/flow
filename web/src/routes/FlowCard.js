@@ -1,6 +1,6 @@
 import React, { PureComponent } from "react";
 import { connect } from "dva";
-import { Card, Form, Layout, Button, notification } from "antd";
+import { Card, Form, Layout, Button, notification, Modal } from "antd";
 
 var BpmnModeler = require("bpmn-js/lib/Modeler");
 var propertiesPanelModule = require("bpmn-js-properties-panel");
@@ -8,6 +8,7 @@ var propertiesProviderModule = require("bpmn-js-properties-panel/lib/provider/ca
 var camundaModdleDescriptor = require("camunda-bpmn-moddle/resources/camunda");
 var fileDownload = require("js-file-download");
 
+const { confirm } = Modal;
 @connect(state => ({ flow: state.flow }))
 @Form.create()
 export default class FlowCard extends PureComponent {
@@ -30,14 +31,38 @@ export default class FlowCard extends PureComponent {
       }
     });
 
-    console.log(this.props.match.params);
-
     this.props.dispatch({
       type: "flow/loadForm",
       payload: this.props.match.params,
       bpmnModeler: bpmnModeler
     });
   }
+
+  onSaveOKClick = () => {
+    const that = this;
+    this.props.flow.bpmnModeler.saveXML({ format: true }, (err, xml) => {
+      if (err) {
+        notification.error({ message: "保存XML文件失败" });
+        return console.error(err);
+      }
+
+      that.props.dispatch({
+        type: "flow/submit",
+        payload: { xml }
+      });
+    });
+  };
+
+  onSaveClick = () => {
+    confirm({
+      title: "确认保存该流程吗？",
+      content: "流程保存之后不允许修改！",
+      okText: "确认",
+      okType: "danger",
+      cancelText: "取消",
+      onOk: this.onSaveOKClick.bind(this)
+    });
+  };
 
   onExportXMLClick = () => {
     this.props.flow.bpmnModeler.saveXML({ format: true }, (err, xml) => {
@@ -63,7 +88,12 @@ export default class FlowCard extends PureComponent {
     const { flow: { submitting, submitVisible } } = this.props;
     if (submitVisible) {
       return (
-        <Button icon="save" type="primary" loading={submitting}>
+        <Button
+          icon="save"
+          type="primary"
+          loading={submitting}
+          onClick={this.onSaveClick}
+        >
           保存
         </Button>
       );
@@ -76,11 +106,7 @@ export default class FlowCard extends PureComponent {
     return (
       <Card
         title={formData.name ? formData.name + " - " + formTitle : formTitle}
-        extra={
-          <a onClick={this.props.history.goBack}>
-            返回
-          </a>
-        }
+        extra={<a onClick={this.props.history.goBack}>返回</a>}
       >
         <Layout
           style={{

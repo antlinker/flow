@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -72,4 +73,38 @@ func (a *API) GetFlow(ctx *gear.Context) error {
 		return gear.ErrInternalServerError.From(err)
 	}
 	return ctx.JSON(http.StatusOK, item)
+}
+
+type saveFlowRequest struct {
+	XML string `json:"xml"`
+}
+
+func (a *saveFlowRequest) Validate() error {
+	if len(a.XML) == 0 {
+		return errors.New("请求含有空数据")
+	}
+	return nil
+}
+
+// SaveFlow 保存流程
+func (a *API) SaveFlow(ctx *gear.Context) error {
+	var req saveFlowRequest
+	if err := ctx.ParseBody(&req); err != nil {
+		return gear.ErrBadRequest.From(err)
+	}
+
+	err := a.engine.CreateFlow([]byte(req.XML))
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	return ctx.JSON(http.StatusOK, "ok")
+}
+
+// DeleteFlow 删除流程数据
+func (a *API) DeleteFlow(ctx *gear.Context) error {
+	err := a.engine.flowBll.DeleteFlow(ctx.Param("id"))
+	if err != nil {
+		return gear.ErrInternalServerError.From(err)
+	}
+	return ctx.JSON(http.StatusOK, "ok")
 }

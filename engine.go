@@ -67,7 +67,11 @@ func (e *Engine) LoadFile(name string) error {
 	if err != nil {
 		return err
 	}
+	return e.CreateFlow(data)
+}
 
+// CreateFlow 创建流程数据
+func (e *Engine) CreateFlow(data []byte) error {
 	result, err := e.parser.Parse(context.Background(), data)
 	if err != nil {
 		return err

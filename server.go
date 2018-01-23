@@ -116,6 +116,8 @@ func newRouterMiddleware(srv *Server) gear.Handler {
 	api := new(API).Init(srv.engine)
 	router.Get("/flow/page", api.QueryFlowPage)
 	router.Get("/flow/:id", api.GetFlow)
+	router.Delete("/flow/:id", api.DeleteFlow)
+	router.Post("/flow", api.SaveFlow)
 
 	return router
 }

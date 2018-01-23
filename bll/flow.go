@@ -178,3 +178,8 @@ func (a *Flow) QueryTodoNodeInstances(flowCode, userID string) ([]*schema.NodeIn
 func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
 	return a.Models.Flow.QueryFlowPage(params, pageIndex, pageSize)
 }
+
+// DeleteFlow 删除流程
+func (a *Flow) DeleteFlow(flowID string) error {
+	return a.Models.Flow.DeleteFlow(flowID)
+}
