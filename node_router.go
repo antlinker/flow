@@ -15,9 +15,9 @@ var (
 
 type (
 	// NextNodeHandle 定义下一节点处理函数
-	NextNodeHandle func(*schema.FlowNodes, *schema.NodeInstances, []*schema.NodeCandidates)
+	NextNodeHandle func(*schema.Node, *schema.NodeInstance, []*schema.NodeCandidate)
 	// EndHandle 定义流程结束处理函数
-	EndHandle func(*schema.FlowInstances)
+	EndHandle func(*schema.FlowInstance)
 )
 
 var defaultNodeRouterOptions = &nodeRouterOptions{
@@ -56,9 +56,9 @@ func OnFlowEndOption(fn EndHandle) NodeRouterOption {
 
 // NodeRouter 节点路由
 type NodeRouter struct {
-	node         *schema.FlowNodes
-	flowInstance *schema.FlowInstances
-	nodeInstance *schema.NodeInstances
+	node         *schema.Node
+	flowInstance *schema.FlowInstance
+	nodeInstance *schema.NodeInstance
 	inputData    []byte
 	engine       *Engine
 	opts         *nodeRouterOptions

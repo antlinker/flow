@@ -77,7 +77,7 @@ export default class FlowCard extends PureComponent {
       <Card
         title={formData.name ? formData.name + " - " + formTitle : formTitle}
         extra={
-          <a href="javascript:void();" onClick={this.props.history.goBack}>
+          <a onClick={this.props.history.goBack}>
             返回
           </a>
         }

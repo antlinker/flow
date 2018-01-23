@@ -16,16 +16,16 @@ type Flow struct {
 
 // Init 初始化
 func (a *Flow) Init(db *db.DB) *Flow {
-	db.AddTableWithName(schema.Flows{}, schema.FlowsTableName)
-	db.AddTableWithName(schema.FlowNodes{}, schema.FlowNodesTableName)
-	db.AddTableWithName(schema.NodeRouters{}, schema.NodeRoutersTableName)
-	db.AddTableWithName(schema.NodeAssignments{}, schema.NodeAssignmentsTableName)
-	db.AddTableWithName(schema.FlowInstances{}, schema.FlowInstancesTableName)
-	db.AddTableWithName(schema.NodeInstances{}, schema.NodeInstancesTableName)
-	db.AddTableWithName(schema.NodeCandidates{}, schema.NodeCandidatesTableName)
-	db.AddTableWithName(schema.FlowForms{}, schema.FlowFormsTableName)
-	db.AddTableWithName(schema.FormFields{}, schema.FormFieldsTableName)
-	db.AddTableWithName(schema.FieldProperties{}, schema.FieldPropertiesTableName)
+	db.AddTableWithName(schema.Flow{}, schema.FlowTableName)
+	db.AddTableWithName(schema.Node{}, schema.NodeTableName)
+	db.AddTableWithName(schema.NodeRouter{}, schema.NodeRouterTableName)
+	db.AddTableWithName(schema.NodeAssignment{}, schema.NodeAssignmentTableName)
+	db.AddTableWithName(schema.FlowInstance{}, schema.FlowInstanceTableName)
+	db.AddTableWithName(schema.NodeInstance{}, schema.NodeInstanceTableName)
+	db.AddTableWithName(schema.NodeCandidate{}, schema.NodeCandidateTableName)
+	db.AddTableWithName(schema.Form{}, schema.FormTableName)
+	db.AddTableWithName(schema.FormField{}, schema.FormFieldTableName)
+	db.AddTableWithName(schema.FieldProperty{}, schema.FieldPropertyTableName)
 	db.AddTableWithName(schema.FieldValidation{}, schema.FieldValidationTableName)
 
 	a.db = db
@@ -33,7 +33,7 @@ func (a *Flow) Init(db *db.DB) *Flow {
 }
 
 // CreateFlowBasic 创建流程基础数据
-func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, routers []*schema.NodeRouters, assignments []*schema.NodeAssignments) error {
+func (a *Flow) CreateFlowBasic(flow *schema.Flow, nodes []*schema.Node, routers []*schema.NodeRouter, assignments []*schema.NodeAssignment) error {
 	tran, err := a.db.Begin()
 	if err != nil {
 		return errors.Wrapf(err, "创建流程基础数据开启事物发生错误")
@@ -89,10 +89,10 @@ func (a *Flow) CreateFlowBasic(flow *schema.Flows, nodes []*schema.FlowNodes, ro
 }
 
 // GetFlow 获取流程数据
-func (a *Flow) GetFlow(recordID string) (*schema.Flows, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=? LIMIT 1", schema.FlowsTableName)
+func (a *Flow) GetFlow(recordID string) (*schema.Flow, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=? LIMIT 1", schema.FlowTableName)
 
-	var flow schema.Flows
+	var flow schema.Flow
 	err := a.db.SelectOne(&flow, query, recordID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -105,10 +105,10 @@ func (a *Flow) GetFlow(recordID string) (*schema.Flows, error) {
 }
 
 // GetFlowByCode 根据编号查询流程数据
-func (a *Flow) GetFlowByCode(code string) (*schema.Flows, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flag=1 AND code=? ORDER BY version DESC LIMIT 1", schema.FlowsTableName)
+func (a *Flow) GetFlowByCode(code string) (*schema.Flow, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flag=1 AND code=? ORDER BY version DESC LIMIT 1", schema.FlowTableName)
 
-	var flow schema.Flows
+	var flow schema.Flow
 	err := a.db.SelectOne(&flow, query, code)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -121,10 +121,10 @@ func (a *Flow) GetFlowByCode(code string) (*schema.Flows, error) {
 }
 
 // GetNode 获取流程节点
-func (a *Flow) GetNode(recordID string) (*schema.FlowNodes, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.FlowNodesTableName)
+func (a *Flow) GetNode(recordID string) (*schema.Node, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.NodeTableName)
 
-	var item schema.FlowNodes
+	var item schema.Node
 	err := a.db.SelectOne(&item, query, recordID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -137,10 +137,10 @@ func (a *Flow) GetNode(recordID string) (*schema.FlowNodes, error) {
 }
 
 // GetNodeByCode 根据节点编号获取流程节点
-func (a *Flow) GetNodeByCode(flowID, nodeCode string) (*schema.FlowNodes, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_id=? AND code=? ORDER BY order_num", schema.FlowNodesTableName)
+func (a *Flow) GetNodeByCode(flowID, nodeCode string) (*schema.Node, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_id=? AND code=? ORDER BY order_num", schema.NodeTableName)
 
-	var items []*schema.FlowNodes
+	var items []*schema.Node
 	_, err := a.db.Select(&items, query, flowID, nodeCode)
 	if err != nil {
 		return nil, errors.Wrapf(err, "根据节点编号获取流程节点发生错误")
@@ -152,10 +152,10 @@ func (a *Flow) GetNodeByCode(flowID, nodeCode string) (*schema.FlowNodes, error)
 }
 
 // GetFlowInstance 获取流程实例
-func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstances, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.FlowInstancesTableName)
+func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstance, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.FlowInstanceTableName)
 
-	var item schema.FlowInstances
+	var item schema.FlowInstance
 	err := a.db.SelectOne(&item, query, recordID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -168,10 +168,10 @@ func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstances, error) {
 }
 
 // GetNodeInstance 获取流程节点实例
-func (a *Flow) GetNodeInstance(recordID string) (*schema.NodeInstances, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.NodeInstancesTableName)
+func (a *Flow) GetNodeInstance(recordID string) (*schema.NodeInstance, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.NodeInstanceTableName)
 
-	var item schema.NodeInstances
+	var item schema.NodeInstance
 	err := a.db.SelectOne(&item, query, recordID)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -184,10 +184,10 @@ func (a *Flow) GetNodeInstance(recordID string) (*schema.NodeInstances, error) {
 }
 
 // QueryNodeRouters 查询节点路由
-func (a *Flow) QueryNodeRouters(sourceNodeID string) ([]*schema.NodeRouters, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND source_node_id=?", schema.NodeRoutersTableName)
+func (a *Flow) QueryNodeRouters(sourceNodeID string) ([]*schema.NodeRouter, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND source_node_id=?", schema.NodeRouterTableName)
 
-	var items []*schema.NodeRouters
+	var items []*schema.NodeRouter
 	_, err := a.db.Select(&items, query, sourceNodeID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "查询节点路由发生错误")
@@ -197,10 +197,10 @@ func (a *Flow) QueryNodeRouters(sourceNodeID string) ([]*schema.NodeRouters, err
 }
 
 // QueryNodeAssignments 查询节点指派
-func (a *Flow) QueryNodeAssignments(nodeID string) ([]*schema.NodeAssignments, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND node_id=?", schema.NodeAssignmentsTableName)
+func (a *Flow) QueryNodeAssignments(nodeID string) ([]*schema.NodeAssignment, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND node_id=?", schema.NodeAssignmentTableName)
 
-	var items []*schema.NodeAssignments
+	var items []*schema.NodeAssignment
 	_, err := a.db.Select(&items, query, nodeID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "查询节点指派发生错误")
@@ -210,7 +210,7 @@ func (a *Flow) QueryNodeAssignments(nodeID string) ([]*schema.NodeAssignments, e
 }
 
 // CreateNodeInstance 创建流程节点实例
-func (a *Flow) CreateNodeInstance(nodeInstance *schema.NodeInstances, nodeCandidates []*schema.NodeCandidates) error {
+func (a *Flow) CreateNodeInstance(nodeInstance *schema.NodeInstance, nodeCandidates []*schema.NodeCandidate) error {
 	tran, err := a.db.Begin()
 	if err != nil {
 		return errors.Wrapf(err, "创建流程节点实例开启事物发生错误")
@@ -245,7 +245,7 @@ func (a *Flow) CreateNodeInstance(nodeInstance *schema.NodeInstances, nodeCandid
 
 // UpdateNodeInstance 更新节点实例信息
 func (a *Flow) UpdateNodeInstance(recordID string, info map[string]interface{}) error {
-	_, err := a.db.UpdateByPK(schema.NodeInstancesTableName, db.M{"record_id": recordID}, db.M(info))
+	_, err := a.db.UpdateByPK(schema.NodeInstanceTableName, db.M{"record_id": recordID}, db.M(info))
 	if err != nil {
 		return errors.Wrapf(err, "更新节点实例信息发生错误")
 	}
@@ -254,7 +254,7 @@ func (a *Flow) UpdateNodeInstance(recordID string, info map[string]interface{}) 
 
 // CheckFlowInstanceTodo 检查流程实例待办事项
 func (a *Flow) CheckFlowInstanceTodo(flowInstanceID string) (bool, error) {
-	query := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted=0 AND status=1 AND flow_instance_id=?", schema.NodeInstancesTableName)
+	query := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted=0 AND status=1 AND flow_instance_id=?", schema.NodeInstanceTableName)
 	n, err := a.db.SelectInt(query, flowInstanceID)
 	if err != nil {
 		return false, errors.Wrapf(err, "检查流程待办事项发生错误")
@@ -264,7 +264,7 @@ func (a *Flow) CheckFlowInstanceTodo(flowInstanceID string) (bool, error) {
 
 // UpdateFlowInstance 更新流程实例信息
 func (a *Flow) UpdateFlowInstance(recordID string, info map[string]interface{}) error {
-	_, err := a.db.UpdateByPK(schema.FlowInstancesTableName, db.M{"record_id": recordID}, db.M(info))
+	_, err := a.db.UpdateByPK(schema.FlowInstanceTableName, db.M{"record_id": recordID}, db.M(info))
 	if err != nil {
 		return errors.Wrapf(err, "更新流程实例信息发生错误")
 	}
@@ -272,7 +272,7 @@ func (a *Flow) UpdateFlowInstance(recordID string, info map[string]interface{}) 
 }
 
 // CreateFlowInstance 创建流程实例
-func (a *Flow) CreateFlowInstance(flowInstance *schema.FlowInstances, nodeInstances ...*schema.NodeInstances) error {
+func (a *Flow) CreateFlowInstance(flowInstance *schema.FlowInstance, nodeInstances ...*schema.NodeInstance) error {
 	tran, err := a.db.Begin()
 	if err != nil {
 		return errors.Wrapf(err, "创建流程实例开启事物发生错误")
@@ -306,10 +306,10 @@ func (a *Flow) CreateFlowInstance(flowInstance *schema.FlowInstances, nodeInstan
 }
 
 // QueryNodeCandidates 查询节点候选人
-func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandidates, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND node_instance_id=?", schema.NodeCandidatesTableName)
+func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandidate, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND node_instance_id=?", schema.NodeCandidateTableName)
 
-	var items []*schema.NodeCandidates
+	var items []*schema.NodeCandidate
 	_, err := a.db.Select(&items, query, nodeInstanceID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "查询节点候选人发生错误")
@@ -319,7 +319,7 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 }
 
 // QueryTodoNodeInstances 查询用户的待办节点实例数据
-func (a *Flow) QueryTodoNodeInstances(flowID, userID string) ([]*schema.NodeInstances, error) {
+func (a *Flow) QueryTodoNodeInstances(flowID, userID string) ([]*schema.NodeInstance, error) {
 	query := fmt.Sprintf(`
 SELECT *
 FROM %s
@@ -329,9 +329,9 @@ WHERE deleted = 0 AND status = 1 AND record_id IN (SELECT node_instance_id
       flow_instance_id IN (SELECT record_id
                            FROM %s
                            WHERE deleted = 0 AND status = 1 AND flow_id = ?)
-		`, schema.NodeInstancesTableName, schema.NodeCandidatesTableName, schema.FlowInstancesTableName)
+		`, schema.NodeInstanceTableName, schema.NodeCandidateTableName, schema.FlowInstanceTableName)
 
-	var items []*schema.NodeInstances
+	var items []*schema.NodeInstance
 	_, err := a.db.Select(&items, query, userID, flowID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "查询用户的待办节点实例数据发生错误")
@@ -356,14 +356,14 @@ func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize u
 		args = append(args, "%"+name+"%")
 	}
 
-	n, err := a.db.SelectInt(fmt.Sprintf("SELECT count(*) FROM %s %s", schema.FlowsTableName, where), args...)
+	n, err := a.db.SelectInt(fmt.Sprintf("SELECT count(*) FROM %s %s", schema.FlowTableName, where), args...)
 	if err != nil {
 		return 0, nil, errors.Wrapf(err, "查询分页数据发生错误")
 	} else if n == 0 {
 		return 0, nil, nil
 	}
 
-	query := fmt.Sprintf("SELECT id,record_id,created,code,name,version FROM %s %s ORDER BY id DESC", schema.FlowsTableName, where)
+	query := fmt.Sprintf("SELECT id,record_id,created,code,name,version FROM %s %s ORDER BY id DESC", schema.FlowTableName, where)
 	if pageIndex > 0 && pageSize > 0 {
 		query = fmt.Sprintf("%s limit %d,%d", query, (pageIndex-1)*pageSize, pageSize)
 	}

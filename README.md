@@ -24,6 +24,7 @@ import (
 
 	"gitee.com/antlinker/flow"
 	"gitee.com/antlinker/flow/service/db"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {

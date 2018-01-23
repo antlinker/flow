@@ -10,9 +10,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func initFlow() {
+func init() {
 	flow.Init(&db.Config{
-		DSN:          "root:123456@tcp(192.168.1.36:3306)/flows?charset=utf8",
+		DSN:          "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
 		Trace:        true,
 		MaxIdleConns: 100,
 		MaxOpenConns: 100,
@@ -36,8 +36,6 @@ func initFlow() {
 }
 
 func TestLeaveBzrApprovalPass(t *testing.T) {
-	initFlow()
-
 	var (
 		flowCode = "process_leave_test"
 		bzr      = "T002"
@@ -83,8 +81,6 @@ func TestLeaveBzrApprovalPass(t *testing.T) {
 }
 
 func TestLeaveBzrApprovalBack(t *testing.T) {
-	initFlow()
-
 	var (
 		flowCode = "process_leave_test"
 		launcher = "T001"
@@ -161,8 +157,6 @@ func TestLeaveBzrApprovalBack(t *testing.T) {
 }
 
 func TestLeaveFdyApprovalPass(t *testing.T) {
-	initFlow()
-
 	var (
 		flowCode = "process_leave_test"
 		launcher = "T001"
@@ -219,8 +213,6 @@ func TestLeaveFdyApprovalPass(t *testing.T) {
 }
 
 func TestApplySQLPass(t *testing.T) {
-	initFlow()
-
 	var (
 		flowCode = "process_apply_sqltest"
 	)
@@ -274,8 +266,6 @@ func TestApplySQLPass(t *testing.T) {
 }
 
 func TestParallel(t *testing.T) {
-	initFlow()
-
 	var (
 		flowCode = "process_parallel_test"
 	)

@@ -2,21 +2,21 @@ package schema
 
 // 定义表名
 const (
-	FlowsTableName           = "f_flows"
-	FlowNodesTableName       = "f_flow_nodes"
-	NodeRoutersTableName     = "f_node_routers"
-	NodeAssignmentsTableName = "f_node_assignments"
-	FlowInstancesTableName   = "f_flow_instances"
-	NodeInstancesTableName   = "f_node_instances"
-	NodeCandidatesTableName  = "f_node_candidates"
-	FlowFormsTableName       = "f_flow_forms"
-	FormFieldsTableName      = "f_form_fields"
-	FieldPropertiesTableName = "f_field_properties"
+	FlowTableName            = "f_flow"
+	NodeTableName            = "f_node"
+	NodeRouterTableName      = "f_node_router"
+	NodeAssignmentTableName  = "f_node_assignment"
+	FlowInstanceTableName    = "f_flow_instance"
+	NodeInstanceTableName    = "f_node_instance"
+	NodeCandidateTableName   = "f_node_candidate"
+	FormTableName            = "f_form"
+	FormFieldTableName       = "f_form_field"
+	FieldPropertyTableName   = "f_field_property"
 	FieldValidationTableName = "f_field_validation"
 )
 
-// Flows 流程表
-type Flows struct {
+// Flow 流程
+type Flow struct {
 	ID       int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`     // 唯一标识(自增ID)
 	RecordID string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 记录内码(uuid)
 	Code     string `db:"code,size:50" structs:"code" json:"code"`                // 流程编号
@@ -32,8 +32,8 @@ type Flows struct {
 	Deleted  int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
 }
 
-// FlowNodes 流程节点表
-type FlowNodes struct {
+// Node 流程节点
+type Node struct {
 	ID       int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`     // 唯一标识(自增ID)
 	RecordID string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 记录内码(uuid)
 	FlowID   string `db:"flow_id,size:36" structs:"flow_id" json:"flow_id"`       // 流程内码(flows.record_id)
@@ -47,8 +47,8 @@ type FlowNodes struct {
 	Deleted  int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
 }
 
-// NodeRouters 节点路由表
-type NodeRouters struct {
+// NodeRouter 节点路由
+type NodeRouter struct {
 	ID              int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                     // 唯一标识(自增ID)
 	RecordID        string `db:"record_id,size:36" structs:"record_id" json:"record_id"`                 // 记录内码(uuid)
 	SourceNodeID    string `db:"source_node_id,size:36" structs:"source_node_id" json:"source_node_id"`  // 源节点内码
@@ -61,8 +61,8 @@ type NodeRouters struct {
 	Deleted         int64  `db:"deleted" structs:"deleted" json:"deleted"`                               // 删除时间戳
 }
 
-// NodeAssignments 节点指派表
-type NodeAssignments struct {
+// NodeAssignment 节点指派
+type NodeAssignment struct {
 	ID         int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`          // 唯一标识(自增ID)
 	RecordID   string `db:"record_id,size:36" structs:"record_id" json:"record_id"`      // 记录内码(uuid)
 	NodeID     string `db:"node_id,size:36" structs:"node_id" json:"node_id"`            // 节点内码(flow_nodes.record_id)
@@ -72,8 +72,8 @@ type NodeAssignments struct {
 	Deleted    int64  `db:"deleted" structs:"deleted" json:"deleted"`                    // 删除时间戳
 }
 
-// FlowInstances 流程实例表
-type FlowInstances struct {
+// FlowInstance 流程实例
+type FlowInstance struct {
 	ID         int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`     // 唯一标识(自增ID)
 	RecordID   string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 记录内码(uuid)
 	FlowID     string `db:"flow_id,size:36" structs:"flow_id" json:"flow_id"`       // 流程内码(flows.record_id)
@@ -85,8 +85,8 @@ type FlowInstances struct {
 	Deleted    int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
 }
 
-// NodeInstances 节点实例表
-type NodeInstances struct {
+// NodeInstance 节点实例表
+type NodeInstance struct {
 	ID             int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                          // 唯一标识(自增ID)
 	RecordID       string `db:"record_id,size:36" structs:"record_id" json:"record_id"`                      // 记录内码(uuid)
 	FlowInstanceID string `db:"flow_instance_id,size:36" structs:"flow_instance_id" json:"flow_instance_id"` // 流程实例内码(flows.record_id)
@@ -101,8 +101,8 @@ type NodeInstances struct {
 	Deleted        int64  `db:"deleted" structs:"deleted" json:"deleted"`                                    // 删除时间戳
 }
 
-// NodeCandidates 节点候选人表
-type NodeCandidates struct {
+// NodeCandidate 节点候选人
+type NodeCandidate struct {
 	ID             int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                          // 唯一标识(自增ID)
 	RecordID       string `db:"record_id,size:36" structs:"record_id" json:"record_id"`                      // 记录内码(uuid)
 	NodeInstanceID string `db:"node_instance_id,size:36" structs:"node_instance_id" json:"node_instance_id"` // 节点实例内码
@@ -112,8 +112,8 @@ type NodeCandidates struct {
 	Deleted        int64  `db:"deleted" structs:"deleted" json:"deleted"`                                    // 删除时间戳
 }
 
-// FlowForms 流程表单表
-type FlowForms struct {
+// Form 流程表单
+type Form struct {
 	ID       int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`     // 唯一标识(自增ID)
 	RecordID string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 记录内码(uuid)
 	FlowID   string `db:"flow_id,size:36" structs:"flow_id" json:"flow_id"`       // 流程内码(flows.record_id)
@@ -126,8 +126,8 @@ type FlowForms struct {
 	Deleted  int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
 }
 
-// FormFields 表单字段表
-type FormFields struct {
+// FormField 表单字段
+type FormField struct {
 	ID           int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                  // 唯一标识(自增ID)
 	RecordID     string `db:"record_id,size:36" structs:"record_id" json:"record_id"`              // 记录内码(uuid)
 	FormID       string `db:"form_id,size:36" structs:"form_id" json:"form_id"`                    // 表单内码(flow_forms.record_id)
@@ -140,8 +140,8 @@ type FormFields struct {
 	Deleted      int64  `db:"deleted" structs:"deleted" json:"deleted"`                            // 删除时间戳
 }
 
-// FieldProperties 字段属性表
-type FieldProperties struct {
+// FieldProperty 字段属性
+type FieldProperty struct {
 	ID       int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`     // 唯一标识(自增ID)
 	RecordID string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 记录内码(uuid)
 	FieldID  string `db:"field_id,size:36" structs:"field_id" json:"field_id"`    // 字段内码(form_fields.record_id)
@@ -152,7 +152,7 @@ type FieldProperties struct {
 	Deleted  int64  `db:"deleted" structs:"deleted" json:"deleted"`               // 删除时间戳
 }
 
-// FieldValidation 字段校验表
+// FieldValidation 字段校验
 type FieldValidation struct {
 	ID               int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                              // 唯一标识(自增ID)
 	RecordID         string `db:"record_id,size:36" structs:"record_id" json:"record_id"`                          // 记录内码(uuid)

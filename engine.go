@@ -83,7 +83,7 @@ func (e *Engine) LoadFile(name string) error {
 		}
 	}
 
-	flow := &schema.Flows{
+	flow := &schema.Flow{
 		RecordID: util.UUID(),
 		Code:     result.FlowID,
 		Name:     result.FlowName,
@@ -93,13 +93,13 @@ func (e *Engine) LoadFile(name string) error {
 	}
 
 	var (
-		nodes       = make([]*schema.FlowNodes, len(result.Nodes))
-		nodeRouters []*schema.NodeRouters
-		nodeAssigns []*schema.NodeAssignments
+		nodes       = make([]*schema.Node, len(result.Nodes))
+		nodeRouters []*schema.NodeRouter
+		nodeAssigns []*schema.NodeAssignment
 	)
 
 	for i, n := range result.Nodes {
-		node := &schema.FlowNodes{
+		node := &schema.Node{
 			RecordID: util.UUID(),
 			FlowID:   flow.RecordID,
 			Code:     n.NodeID,
@@ -110,7 +110,7 @@ func (e *Engine) LoadFile(name string) error {
 		}
 
 		for _, exp := range n.CandidateExpressions {
-			nodeAssigns = append(nodeAssigns, &schema.NodeAssignments{
+			nodeAssigns = append(nodeAssigns, &schema.NodeAssignment{
 				RecordID:   util.UUID(),
 				NodeID:     node.RecordID,
 				Expression: exp,
@@ -132,7 +132,7 @@ func (e *Engine) LoadFile(name string) error {
 
 	for _, n := range result.Nodes {
 		for _, r := range n.Routers {
-			nodeRouters = append(nodeRouters, &schema.NodeRouters{
+			nodeRouters = append(nodeRouters, &schema.NodeRouter{
 				RecordID:     util.UUID(),
 				SourceNodeID: getNodeRecordID(n.NodeID),
 				TargetNodeID: getNodeRecordID(r.TargetNodeID),
@@ -159,14 +159,14 @@ func (r *HandleResult) String() string {
 
 // NextNode 下一节点
 type NextNode struct {
-	Node         *schema.FlowNodes // 节点信息
-	CandidateIDs []string          // 节点候选人
+	Node         *schema.Node // 节点信息
+	CandidateIDs []string     // 节点候选人
 }
 
 func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
 	var result HandleResult
 
-	var onNextNode = OnNextNodeOption(func(node *schema.FlowNodes, nodeInstance *schema.NodeInstances, nodeCandidates []*schema.NodeCandidates) {
+	var onNextNode = OnNextNodeOption(func(node *schema.Node, nodeInstance *schema.NodeInstance, nodeCandidates []*schema.NodeCandidate) {
 		var cids []string
 		for _, nc := range nodeCandidates {
 			cids = append(cids, nc.CandidateID)
@@ -178,7 +178,7 @@ func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte)
 		})
 	})
 
-	var onFlowEnd = OnFlowEndOption(func(_ *schema.FlowInstances) {
+	var onFlowEnd = OnFlowEndOption(func(_ *schema.FlowInstance) {
 		result.IsEnd = true
 	})
 
@@ -222,6 +222,6 @@ func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*H
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
-func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstances, error) {
+func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstance, error) {
 	return e.flowBll.QueryTodoNodeInstances(flowCode, userID)
 }
