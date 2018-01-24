@@ -139,22 +139,23 @@ func (a *Flow) GetNode(recordID string) (*schema.Node, error) {
 
 // GetNodeByCode 根据节点编号获取流程节点
 func (a *Flow) GetNodeByCode(flowID, nodeCode string) (*schema.Node, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_id=? AND code=? ORDER BY order_num", schema.NodeTableName)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_id=? AND code=? ORDER BY order_num LIMIT 1", schema.NodeTableName)
 
-	var items []*schema.Node
-	_, err := a.db.Select(&items, query, flowID, nodeCode)
+	var item schema.Node
+	err := a.db.SelectOne(&item, query, flowID, nodeCode)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, errors.Wrapf(err, "根据节点编号获取流程节点发生错误")
-	} else if len(items) == 0 {
-		return nil, nil
 	}
 
-	return items[0], nil
+	return &item, nil
 }
 
 // GetFlowInstance 获取流程实例
 func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstance, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.FlowInstanceTableName)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=? LIMIT 1", schema.FlowInstanceTableName)
 
 	var item schema.FlowInstance
 	err := a.db.SelectOne(&item, query, recordID)
@@ -168,9 +169,25 @@ func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstance, error) {
 	return &item, nil
 }
 
+// GetFlowInstanceByNode 根据节点实例获取流程实例
+func (a *Flow) GetFlowInstanceByNode(nodeInstanceID string) (*schema.FlowInstance, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id IN (SELECT flow_instance_id FROM %s WHERE deleted=0 AND record_id=?) LIMIT 1", schema.FlowInstanceTableName, schema.NodeInstanceTableName)
+
+	var item schema.FlowInstance
+	err := a.db.SelectOne(&item, query, nodeInstanceID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "根据节点实例获取流程实例发生错误")
+	}
+
+	return &item, nil
+}
+
 // GetNodeInstance 获取流程节点实例
 func (a *Flow) GetNodeInstance(recordID string) (*schema.NodeInstance, error) {
-	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.NodeInstanceTableName)
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=? LIMIT 1", schema.NodeInstanceTableName)
 
 	var item schema.NodeInstance
 	err := a.db.SelectOne(&item, query, recordID)

@@ -40,6 +40,11 @@ func (a *Flow) GetFlowInstance(recordID string) (*schema.FlowInstance, error) {
 	return a.Models.Flow.GetFlowInstance(recordID)
 }
 
+// GetFlowInstanceByNode 根据节点实例获取流程实例
+func (a *Flow) GetFlowInstanceByNode(nodeInstanceID string) (*schema.FlowInstance, error) {
+	return a.Models.Flow.GetFlowInstanceByNode(nodeInstanceID)
+}
+
 // GetNodeInstance 获取流程节点实例
 func (a *Flow) GetNodeInstance(recordID string) (*schema.NodeInstance, error) {
 	return a.Models.Flow.GetNodeInstance(recordID)
@@ -110,6 +115,14 @@ func (a *Flow) CheckFlowInstanceTodo(flowInstanceID string) (bool, error) {
 
 // DoneFlowInstance 完成流程实例
 func (a *Flow) DoneFlowInstance(flowInstanceID string) error {
+	info := map[string]interface{}{
+		"status": 9,
+	}
+	return a.Models.Flow.UpdateFlowInstance(flowInstanceID, info)
+}
+
+// StopFlowInstance 停止流程实例
+func (a *Flow) StopFlowInstance(flowInstanceID string) error {
 	info := map[string]interface{}{
 		"status": 9,
 	}

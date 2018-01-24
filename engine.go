@@ -223,6 +223,22 @@ func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*H
 	return e.nextFlowHandle(nodeInstanceID, userID, inputData)
 }
 
+// StopFlow 停止流程
+func (e *Engine) StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInstance) bool) error {
+	flowInstance, err := e.flowBll.GetFlowInstanceByNode(nodeInstanceID)
+	if err != nil {
+		return err
+	} else if flowInstance == nil {
+		return errors.New("流程不存在")
+	}
+
+	if allowStop != nil && !allowStop(flowInstance) {
+		return errors.New("不允许停止流程")
+	}
+
+	return e.flowBll.StopFlowInstance(flowInstance.RecordID)
+}
+
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人

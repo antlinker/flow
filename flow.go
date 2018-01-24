@@ -63,6 +63,11 @@ func HandleFlow(nodeInstanceID, userID string, input interface{}) (*HandleResult
 	return engine.HandleFlow(nodeInstanceID, userID, inputData)
 }
 
+// StopFlow 停止流程
+func StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInstance) bool) error {
+	return engine.StopFlow(nodeInstanceID, allowStop)
+}
+
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
