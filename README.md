@@ -34,7 +34,7 @@ func main() {
 		MaxIdleConns: 100,
 		MaxOpenConns: 100,
 		MaxLifetime:  time.Hour * 2,
-    })
+  })
 }
 
 ```
@@ -46,15 +46,14 @@ func main() {
 	if err != nil {
 		// 处理错误
 	}
-
 ```
 
 ### 3. 发起流程
 
 ```go
-    input := map[string]interface{}{
-		"day": 1,
-    }
+  input := map[string]interface{}{
+	"day": 1,
+  }
 
 	result, err := flow.StartFlow("流程编号", "开始节点编号", "流程发起人ID", input)
 	if err != nil {
@@ -74,21 +73,32 @@ func main() {
 ### 5. 处理流程
 
 ```go
-    input := map[string]interface{}{
-		"action": "pass",
-    }
+  input := map[string]interface{}{
+	"action": "pass",
+  }
 
-    result, err = flow.HandleFlow("待办流程节点实例ID", "流程处理人ID", input)
+  result, err = flow.HandleFlow("待办流程节点实例ID", "流程处理人ID", input)
 	if err != nil {
 		// 处理错误
 	}
 ```
 
-### 6. 接入WEB流程管理
+### 6. 停止流程
+
+```go
+	err := flow.StopFlow("待办流程节点实例ID", func(flowInstance *schema.FlowInstance) bool {
+		return flowInstance.Launcher == "XXX"
+	})
+	if err != nil {
+		// 处理错误
+	}
+```
+
+### 7. 接入WEB流程管理
 
 ```go
 func main() {
-	serverOptions := []flow.ServerOption{
+serverOptions := []flow.ServerOption{
 		flow.ServerStaticRootOption("./web"),
 		flow.ServerPrefixOption("/flow/"),
 		flow.ServerMiddlewareOption(filter),
