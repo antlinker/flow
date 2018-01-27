@@ -25,7 +25,6 @@ type NodeResult struct {
 	NodeType             NodeType        // 节点类型
 	Routers              []*RouterResult // 节点路由
 	CandidateExpressions []string        // 候选人表达式
-	FlowResult           *ParseResult    // 子流程
 	FormResult           *NodeFormResult // 节点表单
 }
 
@@ -48,7 +47,7 @@ type FormFieldResult struct {
 	Type         string             // 字段类型
 	Label        string             // 字段标签
 	DefaultValue string             // 默认值
-	Values       []*FieldOption     // 枚举类型有一个列表
+	Values       []*FieldOption     // 枚举类型
 	Validations  []*FieldValidation // 字段验证
 	Properties   []*FieldProperty   // 字段属性
 }
@@ -65,8 +64,8 @@ type FieldProperty struct {
 	Value string // 属性值
 }
 
-// FieldOption 下拉选项
+// FieldOption 枚举选项
 type FieldOption struct {
-	ID   string // 属性ID
-	Name string // 属性值
+	ID   string // 选项值ID
+	Name string // 选项值名称
 }

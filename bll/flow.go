@@ -22,12 +22,12 @@ func (a *Flow) GetFlowByCode(code string) (*schema.Flow, error) {
 	return a.Models.Flow.GetFlowByCode(code)
 }
 
-// CreateFlowBasic 创建流程基础数据
-func (a *Flow) CreateFlowBasic(flow *schema.Flow, nodes []*schema.Node, routers []*schema.NodeRouter, assignments []*schema.NodeAssignment) error {
+// CreateFlow 创建流程数据
+func (a *Flow) CreateFlow(flow *schema.Flow, nodes *schema.NodeOperating, forms *schema.FormOperating) error {
 	if flow.Flag == 0 {
 		flow.Flag = 1
 	}
-	return a.Models.Flow.CreateFlowBasic(flow, nodes, routers, assignments)
+	return a.Models.Flow.CreateFlow(flow, nodes, forms)
 }
 
 // GetNode 获取流程节点

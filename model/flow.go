@@ -26,6 +26,7 @@ func (a *Flow) Init(db *db.DB) *Flow {
 	db.AddTableWithName(schema.NodeCandidate{}, schema.NodeCandidateTableName)
 	db.AddTableWithName(schema.Form{}, schema.FormTableName)
 	db.AddTableWithName(schema.FormField{}, schema.FormFieldTableName)
+	db.AddTableWithName(schema.FieldOption{}, schema.FieldOptionTableName)
 	db.AddTableWithName(schema.FieldProperty{}, schema.FieldPropertyTableName)
 	db.AddTableWithName(schema.FieldValidation{}, schema.FieldValidationTableName)
 
@@ -33,8 +34,8 @@ func (a *Flow) Init(db *db.DB) *Flow {
 	return a
 }
 
-// CreateFlowBasic 创建流程基础数据
-func (a *Flow) CreateFlowBasic(flow *schema.Flow, nodes []*schema.Node, routers []*schema.NodeRouter, assignments []*schema.NodeAssignment) error {
+// CreateFlow 创建流程数据
+func (a *Flow) CreateFlow(flow *schema.Flow, nodes *schema.NodeOperating, forms *schema.FormOperating) error {
 	tran, err := a.db.Begin()
 	if err != nil {
 		return errors.Wrapf(err, "创建流程基础数据开启事物发生错误")
@@ -42,43 +43,23 @@ func (a *Flow) CreateFlowBasic(flow *schema.Flow, nodes []*schema.Node, routers 
 
 	err = tran.Insert(flow)
 	if err != nil {
-		err = tran.Rollback()
-		if err != nil {
-			return errors.Wrapf(err, "创建流程基础数据回滚事物发生错误")
-		}
+		_ = tran.Rollback()
 		return errors.Wrapf(err, "插入流程数据发生错误")
 	}
 
-	for _, node := range nodes {
-		err = tran.Insert(node)
+	if list := nodes.All(); len(list) > 0 {
+		err = tran.Insert(list...)
 		if err != nil {
-			err = tran.Rollback()
-			if err != nil {
-				return errors.Wrapf(err, "创建流程基础数据回滚事物发生错误")
-			}
-			return errors.Wrapf(err, "插入流程节点数据发生错误")
+			_ = tran.Rollback()
+			return errors.Wrapf(err, "插入节点数据发生错误")
 		}
 	}
 
-	for _, router := range routers {
-		err = tran.Insert(router)
+	if list := forms.All(); len(list) > 0 {
+		err = tran.Insert(list...)
 		if err != nil {
-			err = tran.Rollback()
-			if err != nil {
-				return errors.Wrapf(err, "创建流程基础数据回滚事物发生错误")
-			}
-			return errors.Wrapf(err, "插入流程节点路由数据发生错误")
-		}
-	}
-
-	for _, assign := range assignments {
-		err = tran.Insert(assign)
-		if err != nil {
-			err = tran.Rollback()
-			if err != nil {
-				return errors.Wrapf(err, "创建流程基础数据回滚事物发生错误")
-			}
-			return errors.Wrapf(err, "插入流程节点指派数据发生错误")
+			_ = tran.Rollback()
+			return errors.Wrapf(err, "插入表单数据发生错误")
 		}
 	}
 

@@ -3,14 +3,17 @@
   <bpmn:process id="process_leave_test" name="请假" isExecutable="false" camunda:versionTag="2">
     <bpmn:startEvent id="node_start" name="开始">
       <bpmn:extensionElements>
-        <camunda:formData businessKey="FormField_0542ekb">
-          <camunda:formField id="FormField_0542ekb" type="string" />
-        </camunda:formData>
+        <camunda:formData />
       </bpmn:extensionElements>
       <bpmn:outgoing>SequenceFlow_1wluadc</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:sequenceFlow id="SequenceFlow_1wluadc" sourceRef="node_start" targetRef="node_user_apply" />
-    <bpmn:userTask id="node_user_apply" name="填写请假申请" camunda:candidateUsers="[]string{flow.launcher}">
+    <bpmn:userTask id="node_user_apply" name="填写请假申请" camunda:formKey="form_apply" camunda:candidateUsers="[]string{flow.launcher}">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="name" label="名称" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_1wluadc</bpmn:incoming>
       <bpmn:incoming>SequenceFlow_0yjkvst</bpmn:incoming>
       <bpmn:incoming>SequenceFlow_015e8n6</bpmn:incoming>

@@ -70,6 +70,141 @@ func (e *Engine) LoadFile(name string) error {
 	return e.CreateFlow(data)
 }
 
+func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *schema.Flow, node *schema.Node, formResult *NodeFormResult) {
+	if formResult.ID == "" {
+		formResult.ID = util.UUID()
+	}
+
+	formExists := false
+	for _, f := range formOperating.FormGroup {
+		if f.Code == formResult.ID {
+			node.FormID = f.RecordID
+			formExists = true
+			break
+		}
+	}
+	if formExists {
+		return
+	}
+
+	form := &schema.Form{
+		RecordID: util.UUID(),
+		FlowID:   flow.RecordID,
+		Code:     formResult.ID,
+		TypeCode: "META",
+		Created:  flow.Created,
+	}
+
+	meta, _ := json.Marshal(formResult.Fields)
+	form.Data = string(meta)
+
+	for _, ff := range formResult.Fields {
+		field := &schema.FormField{
+			RecordID:     util.UUID(),
+			FormID:       form.RecordID,
+			Code:         ff.ID,
+			Label:        ff.Label,
+			TypeCode:     ff.Type,
+			DefaultValue: ff.DefaultValue,
+			Created:      flow.Created,
+		}
+
+		for _, item := range ff.Values {
+			formOperating.FieldOptionGroup = append(formOperating.FieldOptionGroup, &schema.FieldOption{
+				RecordID:  util.UUID(),
+				FieldID:   field.RecordID,
+				ValueID:   item.ID,
+				ValueName: item.Name,
+				Created:   flow.Created,
+			})
+		}
+
+		for _, item := range ff.Properties {
+			formOperating.FieldPropertyGroup = append(formOperating.FieldPropertyGroup, &schema.FieldProperty{
+				RecordID: util.UUID(),
+				FieldID:  field.RecordID,
+				Code:     item.ID,
+				Value:    item.Value,
+				Created:  flow.Created,
+			})
+		}
+
+		for _, item := range ff.Validations {
+			formOperating.FieldValidationGroup = append(formOperating.FieldValidationGroup, &schema.FieldValidation{
+				RecordID:         util.UUID(),
+				FieldID:          field.RecordID,
+				ConstraintName:   item.Name,
+				ConstraintConfig: item.Config,
+				Created:          flow.Created,
+			})
+		}
+
+		formOperating.FormFieldGroup = append(formOperating.FormFieldGroup, field)
+	}
+
+	formOperating.FormGroup = append(formOperating.FormGroup, form)
+	node.FormID = form.RecordID
+}
+
+// 创建节点操作
+func (e *Engine) parseOperating(flow *schema.Flow, nodeResults []*NodeResult) (*schema.NodeOperating, *schema.FormOperating) {
+	nodeOperating := &schema.NodeOperating{
+		NodeGroup: make([]*schema.Node, len(nodeResults)),
+	}
+	formOperating := &schema.FormOperating{}
+
+	for i, n := range nodeResults {
+		node := &schema.Node{
+			RecordID: util.UUID(),
+			FlowID:   flow.RecordID,
+			Code:     n.NodeID,
+			Name:     n.NodeName,
+			TypeCode: n.NodeType.String(),
+			OrderNum: strconv.FormatInt(int64(i+10), 10),
+			Created:  flow.Created,
+		}
+
+		if n.FormResult != nil && len(n.FormResult.Fields) > 0 {
+			e.parseFormOperating(formOperating, flow, node, n.FormResult)
+		}
+
+		for _, exp := range n.CandidateExpressions {
+			nodeOperating.AssignmentGroup = append(nodeOperating.AssignmentGroup, &schema.NodeAssignment{
+				RecordID:   util.UUID(),
+				NodeID:     node.RecordID,
+				Expression: exp,
+				Created:    flow.Created,
+			})
+		}
+
+		nodeOperating.NodeGroup[i] = node
+	}
+
+	var getNodeRecordID = func(nodeCode string) string {
+		for _, n := range nodeOperating.NodeGroup {
+			if n.Code == nodeCode {
+				return n.RecordID
+			}
+		}
+		return ""
+	}
+
+	for _, n := range nodeResults {
+		for _, r := range n.Routers {
+			nodeOperating.RouterGroup = append(nodeOperating.RouterGroup, &schema.NodeRouter{
+				RecordID:     util.UUID(),
+				SourceNodeID: getNodeRecordID(n.NodeID),
+				TargetNodeID: getNodeRecordID(r.TargetNodeID),
+				Expression:   r.Expression,
+				Explain:      r.Explain,
+				Created:      flow.Created,
+			})
+		}
+	}
+
+	return nodeOperating, formOperating
+}
+
 // CreateFlow 创建流程数据
 func (e *Engine) CreateFlow(data []byte) error {
 	result, err := e.parser.Parse(context.Background(), data)
@@ -96,58 +231,8 @@ func (e *Engine) CreateFlow(data []byte) error {
 		Created:  time.Now().Unix(),
 	}
 
-	var (
-		nodes       = make([]*schema.Node, len(result.Nodes))
-		nodeRouters []*schema.NodeRouter
-		nodeAssigns []*schema.NodeAssignment
-	)
-
-	for i, n := range result.Nodes {
-		node := &schema.Node{
-			RecordID: util.UUID(),
-			FlowID:   flow.RecordID,
-			Code:     n.NodeID,
-			Name:     n.NodeName,
-			TypeCode: n.NodeType.String(),
-			OrderNum: strconv.FormatInt(int64(i+10), 10),
-			Created:  flow.Created,
-		}
-
-		for _, exp := range n.CandidateExpressions {
-			nodeAssigns = append(nodeAssigns, &schema.NodeAssignment{
-				RecordID:   util.UUID(),
-				NodeID:     node.RecordID,
-				Expression: exp,
-				Created:    flow.Created,
-			})
-		}
-
-		nodes[i] = node
-	}
-
-	var getNodeRecordID = func(nodeCode string) string {
-		for _, n := range nodes {
-			if n.Code == nodeCode {
-				return n.RecordID
-			}
-		}
-		return ""
-	}
-
-	for _, n := range result.Nodes {
-		for _, r := range n.Routers {
-			nodeRouters = append(nodeRouters, &schema.NodeRouter{
-				RecordID:     util.UUID(),
-				SourceNodeID: getNodeRecordID(n.NodeID),
-				TargetNodeID: getNodeRecordID(r.TargetNodeID),
-				Expression:   r.Expression,
-				Explain:      r.Explain,
-				Created:      flow.Created,
-			})
-		}
-	}
-
-	return e.flowBll.CreateFlowBasic(flow, nodes, nodeRouters, nodeAssigns)
+	nodeOperating, formOperating := e.parseOperating(flow, result.Nodes)
+	return e.flowBll.CreateFlow(flow, nodeOperating, formOperating)
 }
 
 // HandleResult 处理结果
