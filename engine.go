@@ -71,8 +71,8 @@ func (e *Engine) LoadFile(name string) error {
 }
 
 func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *schema.Flow, node *schema.Node, formResult *NodeFormResult) {
-	if formResult.ID == "" {
-		formResult.ID = util.UUID()
+	if formResult.ID == "" && len(formResult.Fields) == 0 {
+		return
 	}
 
 	formExists := false
@@ -83,7 +83,7 @@ func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *s
 			break
 		}
 	}
-	if formExists {
+	if formExists || len(formResult.Fields) == 0 {
 		return
 	}
 
@@ -93,6 +93,10 @@ func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *s
 		Code:     formResult.ID,
 		TypeCode: "META",
 		Created:  flow.Created,
+	}
+
+	if form.Code == "" {
+		form.Code = util.UUID()
 	}
 
 	meta, _ := json.Marshal(formResult.Fields)
@@ -164,7 +168,7 @@ func (e *Engine) parseOperating(flow *schema.Flow, nodeResults []*NodeResult) (*
 			Created:  flow.Created,
 		}
 
-		if n.FormResult != nil && len(n.FormResult.Fields) > 0 {
+		if n.FormResult != nil {
 			e.parseFormOperating(formOperating, flow, node, n.FormResult)
 		}
 
