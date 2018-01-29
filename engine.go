@@ -67,37 +67,98 @@ func (e *Engine) LoadFile(name string) error {
 	if err != nil {
 		return err
 	}
+	return e.CreateFlow(data)
+}
 
-	result, err := e.parser.Parse(context.Background(), data)
-	if err != nil {
-		return err
+func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *schema.Flow, node *schema.Node, formResult *NodeFormResult) {
+	if formResult.ID == "" && len(formResult.Fields) == 0 {
+		return
 	}
 
-	// 检查流程编号是否存在，如果存在则不处理
-	exists, err := e.flowBll.CheckFlowCode(result.FlowID)
-	if err != nil {
-		return err
-	} else if exists {
-		return nil
+	formExists := false
+	for _, f := range formOperating.FormGroup {
+		if f.Code == formResult.ID {
+			node.FormID = f.RecordID
+			formExists = true
+			break
+		}
+	}
+	if formExists || len(formResult.Fields) == 0 {
+		return
 	}
 
-	flow := &schema.Flows{
+	form := &schema.Form{
 		RecordID: util.UUID(),
-		Code:     result.FlowID,
-		Name:     result.FlowName,
-		Version:  result.FlowVersion,
-		XML:      string(data),
-		Created:  time.Now().Unix(),
+		FlowID:   flow.RecordID,
+		Code:     formResult.ID,
+		TypeCode: "META",
+		Created:  flow.Created,
 	}
 
-	var (
-		nodes       = make([]*schema.FlowNodes, len(result.Nodes))
-		nodeRouters []*schema.NodeRouters
-		nodeAssigns []*schema.NodeAssignments
-	)
+	if form.Code == "" {
+		form.Code = util.UUID()
+	}
 
-	for i, n := range result.Nodes {
-		node := &schema.FlowNodes{
+	meta, _ := json.Marshal(formResult.Fields)
+	form.Data = string(meta)
+
+	for _, ff := range formResult.Fields {
+		field := &schema.FormField{
+			RecordID:     util.UUID(),
+			FormID:       form.RecordID,
+			Code:         ff.ID,
+			Label:        ff.Label,
+			TypeCode:     ff.Type,
+			DefaultValue: ff.DefaultValue,
+			Created:      flow.Created,
+		}
+
+		for _, item := range ff.Values {
+			formOperating.FieldOptionGroup = append(formOperating.FieldOptionGroup, &schema.FieldOption{
+				RecordID:  util.UUID(),
+				FieldID:   field.RecordID,
+				ValueID:   item.ID,
+				ValueName: item.Name,
+				Created:   flow.Created,
+			})
+		}
+
+		for _, item := range ff.Properties {
+			formOperating.FieldPropertyGroup = append(formOperating.FieldPropertyGroup, &schema.FieldProperty{
+				RecordID: util.UUID(),
+				FieldID:  field.RecordID,
+				Code:     item.ID,
+				Value:    item.Value,
+				Created:  flow.Created,
+			})
+		}
+
+		for _, item := range ff.Validations {
+			formOperating.FieldValidationGroup = append(formOperating.FieldValidationGroup, &schema.FieldValidation{
+				RecordID:         util.UUID(),
+				FieldID:          field.RecordID,
+				ConstraintName:   item.Name,
+				ConstraintConfig: item.Config,
+				Created:          flow.Created,
+			})
+		}
+
+		formOperating.FormFieldGroup = append(formOperating.FormFieldGroup, field)
+	}
+
+	formOperating.FormGroup = append(formOperating.FormGroup, form)
+	node.FormID = form.RecordID
+}
+
+// 创建节点操作
+func (e *Engine) parseOperating(flow *schema.Flow, nodeResults []*NodeResult) (*schema.NodeOperating, *schema.FormOperating) {
+	nodeOperating := &schema.NodeOperating{
+		NodeGroup: make([]*schema.Node, len(nodeResults)),
+	}
+	formOperating := &schema.FormOperating{}
+
+	for i, n := range nodeResults {
+		node := &schema.Node{
 			RecordID: util.UUID(),
 			FlowID:   flow.RecordID,
 			Code:     n.NodeID,
@@ -107,8 +168,12 @@ func (e *Engine) LoadFile(name string) error {
 			Created:  flow.Created,
 		}
 
+		if n.FormResult != nil {
+			e.parseFormOperating(formOperating, flow, node, n.FormResult)
+		}
+
 		for _, exp := range n.CandidateExpressions {
-			nodeAssigns = append(nodeAssigns, &schema.NodeAssignments{
+			nodeOperating.AssignmentGroup = append(nodeOperating.AssignmentGroup, &schema.NodeAssignment{
 				RecordID:   util.UUID(),
 				NodeID:     node.RecordID,
 				Expression: exp,
@@ -116,11 +181,11 @@ func (e *Engine) LoadFile(name string) error {
 			})
 		}
 
-		nodes[i] = node
+		nodeOperating.NodeGroup[i] = node
 	}
 
 	var getNodeRecordID = func(nodeCode string) string {
-		for _, n := range nodes {
+		for _, n := range nodeOperating.NodeGroup {
 			if n.Code == nodeCode {
 				return n.RecordID
 			}
@@ -128,9 +193,9 @@ func (e *Engine) LoadFile(name string) error {
 		return ""
 	}
 
-	for _, n := range result.Nodes {
+	for _, n := range nodeResults {
 		for _, r := range n.Routers {
-			nodeRouters = append(nodeRouters, &schema.NodeRouters{
+			nodeOperating.RouterGroup = append(nodeOperating.RouterGroup, &schema.NodeRouter{
 				RecordID:     util.UUID(),
 				SourceNodeID: getNodeRecordID(n.NodeID),
 				TargetNodeID: getNodeRecordID(r.TargetNodeID),
@@ -141,7 +206,37 @@ func (e *Engine) LoadFile(name string) error {
 		}
 	}
 
-	return e.flowBll.CreateFlowBasic(flow, nodes, nodeRouters, nodeAssigns)
+	return nodeOperating, formOperating
+}
+
+// CreateFlow 创建流程数据
+func (e *Engine) CreateFlow(data []byte) error {
+	result, err := e.parser.Parse(context.Background(), data)
+	if err != nil {
+		return err
+	}
+
+	// 检查流程是否存在，如果存在则检查版本号是否一致，如果不一致则创建新流程
+	oldFlow, err := e.flowBll.GetFlowByCode(result.FlowID)
+	if err != nil {
+		return err
+	} else if oldFlow != nil {
+		if result.FlowVersion <= oldFlow.Version {
+			return nil
+		}
+	}
+
+	flow := &schema.Flow{
+		RecordID: util.UUID(),
+		Code:     result.FlowID,
+		Name:     result.FlowName,
+		Version:  result.FlowVersion,
+		XML:      string(data),
+		Created:  time.Now().Unix(),
+	}
+
+	nodeOperating, formOperating := e.parseOperating(flow, result.Nodes)
+	return e.flowBll.CreateFlow(flow, nodeOperating, formOperating)
 }
 
 // HandleResult 处理结果
@@ -157,14 +252,14 @@ func (r *HandleResult) String() string {
 
 // NextNode 下一节点
 type NextNode struct {
-	Node         *schema.FlowNodes // 节点信息
-	CandidateIDs []string          // 节点候选人
+	Node         *schema.Node // 节点信息
+	CandidateIDs []string     // 节点候选人
 }
 
 func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
 	var result HandleResult
 
-	var onNextNode = OnNextNodeOption(func(node *schema.FlowNodes, nodeInstance *schema.NodeInstances, nodeCandidates []*schema.NodeCandidates) {
+	var onNextNode = OnNextNodeOption(func(node *schema.Node, nodeInstance *schema.NodeInstance, nodeCandidates []*schema.NodeCandidate) {
 		var cids []string
 		for _, nc := range nodeCandidates {
 			cids = append(cids, nc.CandidateID)
@@ -176,7 +271,7 @@ func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte)
 		})
 	})
 
-	var onFlowEnd = OnFlowEndOption(func(_ *schema.FlowInstances) {
+	var onFlowEnd = OnFlowEndOption(func(_ *schema.FlowInstance) {
 		result.IsEnd = true
 	})
 
@@ -217,9 +312,25 @@ func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*H
 	return e.nextFlowHandle(nodeInstanceID, userID, inputData)
 }
 
+// StopFlow 停止流程
+func (e *Engine) StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInstance) bool) error {
+	flowInstance, err := e.flowBll.GetFlowInstanceByNode(nodeInstanceID)
+	if err != nil {
+		return err
+	} else if flowInstance == nil {
+		return errors.New("流程不存在")
+	}
+
+	if allowStop != nil && !allowStop(flowInstance) {
+		return errors.New("不允许停止流程")
+	}
+
+	return e.flowBll.StopFlowInstance(flowInstance.RecordID)
+}
+
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
-func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstances, error) {
-	return e.flowBll.QueryTodoNodeInstances(flowCode, userID)
+func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
+	return e.flowBll.QueryTodo(flowCode, userID)
 }

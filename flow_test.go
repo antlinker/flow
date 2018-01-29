@@ -7,13 +7,13 @@ import (
 
 	"gitee.com/antlinker/flow"
 	"gitee.com/antlinker/flow/service/db"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func init() {
-
 	flow.Init(&db.Config{
-		DSN:          "root:123456@tcp(192.168.1.36:3306)/flows?charset=utf8",
-		Trace:        true,
+		DSN:          "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
+		Trace:        false,
 		MaxIdleConns: 100,
 		MaxOpenConns: 100,
 		MaxLifetime:  time.Hour * 2,

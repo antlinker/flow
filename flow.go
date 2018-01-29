@@ -2,6 +2,7 @@ package flow
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"gitee.com/antlinker/flow/expression/sql"
 	"gitee.com/antlinker/flow/schema"
@@ -62,9 +63,20 @@ func HandleFlow(nodeInstanceID, userID string, input interface{}) (*HandleResult
 	return engine.HandleFlow(nodeInstanceID, userID, inputData)
 }
 
+// StopFlow 停止流程
+func StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInstance) bool) error {
+	return engine.StopFlow(nodeInstanceID, allowStop)
+}
+
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
-func QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstances, error) {
+func QueryTodoFlows(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
 	return engine.QueryTodoFlows(flowCode, userID)
+}
+
+// StartServer 启动管理服务
+func StartServer(opts ...ServerOption) http.Handler {
+	srv := new(Server).Init(engine, opts...)
+	return srv
 }
