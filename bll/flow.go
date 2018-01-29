@@ -176,15 +176,15 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 	return a.Models.Flow.QueryNodeCandidates(nodeInstanceID)
 }
 
-// QueryTodoNodeInstances 查询用户的待办节点实例数据
-func (a *Flow) QueryTodoNodeInstances(flowCode, userID string) ([]*schema.NodeInstance, error) {
+// QueryTodo 查询用户的待办节点实例数据
+func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
 	flow, err := a.Models.Flow.GetFlowByCode(flowCode)
 	if err != nil {
 		return nil, err
 	} else if flow == nil {
 		return nil, nil
 	}
-	return a.Models.Flow.QueryTodoNodeInstances(flow.RecordID, userID)
+	return a.Models.Flow.QueryTodo(flow.RecordID, userID)
 }
 
 // QueryFlowPage 查询流程分页数据

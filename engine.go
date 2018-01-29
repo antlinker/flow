@@ -331,6 +331,6 @@ func (e *Engine) StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInst
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
-func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstance, error) {
-	return e.flowBll.QueryTodoNodeInstances(flowCode, userID)
+func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
+	return e.flowBll.QueryTodo(flowCode, userID)
 }

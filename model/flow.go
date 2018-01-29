@@ -317,23 +317,31 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 	return items, nil
 }
 
-// QueryTodoNodeInstances 查询用户的待办节点实例数据
-func (a *Flow) QueryTodoNodeInstances(flowID, userID string) ([]*schema.NodeInstance, error) {
+// QueryTodo 查询用户的待办数据
+func (a *Flow) QueryTodo(flowID, userID string) ([]*schema.FlowTodoResult, error) {
 	query := fmt.Sprintf(`
-SELECT *
-FROM %s
-WHERE deleted = 0 AND status = 1 AND record_id IN (SELECT node_instance_id
-                                                   FROM %s
-                                                   WHERE deleted = 0 AND candidate_id = ?) AND
-      flow_instance_id IN (SELECT record_id
-                           FROM %s
-                           WHERE deleted = 0 AND status = 1 AND flow_id = ?)
-		`, schema.NodeInstanceTableName, schema.NodeCandidateTableName, schema.FlowInstanceTableName)
+	SELECT
+	  ni.record_id,
+	  ni.flow_instance_id,
+	  ni.input_data,
+	  ni.node_id,
+	  f.data 'form_data',
+	  fi.launcher,
+	  fi.launch_time
+	FROM %s ni
+	  JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
+	  LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
+	  LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
+	WHERE ni.deleted = 0 AND ni.status = 1 AND fi.status = 1 AND fi.flow_id = ?
+	      AND ni.record_id IN (SELECT node_instance_id
+	                           FROM %s
+	                           WHERE deleted = 0 AND candidate_id = ?)
+	`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.NodeCandidateTableName)
 
-	var items []*schema.NodeInstance
-	_, err := a.db.Select(&items, query, userID, flowID)
+	var items []*schema.FlowTodoResult
+	_, err := a.db.Select(&items, query, flowID, userID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "查询用户的待办节点实例数据发生错误")
+		return nil, errors.Wrapf(err, "查询用户的待办数据发生错误")
 	}
 	return items, nil
 }
