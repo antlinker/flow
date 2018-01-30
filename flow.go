@@ -71,7 +71,7 @@ func StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInstance) bool) 
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
-func QueryTodoFlows(flowCode, userID string) ([]*schema.NodeInstance, error) {
+func QueryTodoFlows(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
 	return engine.QueryTodoFlows(flowCode, userID)
 }
 
