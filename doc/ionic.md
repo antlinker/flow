@@ -9,17 +9,26 @@
     git checkout core
     npm install
     cd packages/core
-    git npm install
+    npm install
     npm run build
 
 ## 压缩并上传
 
     cd dist
     gzip -r ./
+    scp -r * ubuntu@119.27.161.206:/home/ubuntu/www
 
+## 开始服务
 在服务器上安装nodejs
 
     curl -sL https://deb.nodesource.com/setup_8.x | sudo -E bash -
     sudo apt-get install -y nodejs
 
-    mongodb://oplogr3:HdsngClfjz2017@192.168.3.12:12003/oplogadmin
+
+安装http-server
+
+    npm install http-server -g
+
+运行http-server
+    cd /home/ubuntu/www
+    nohup http-server -g >> http-server.log &
