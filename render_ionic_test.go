@@ -7,8 +7,7 @@ import (
 	"testing"
 )
 
-func TestRenderIonic(t *testing.T) {
-	var testString = `
+var testString = `
 	{
 		"ID": "key_test",
 		"Fields": [{
@@ -42,7 +41,7 @@ func TestRenderIonic(t *testing.T) {
 		}, {
 			"ID": "FormField_3",
 			"Type": "date",
-			"Label": "",
+			"Label": "选择日期",
 			"DefaultValue": "",
 			"Values": null,
 			"Validations": null,
@@ -64,7 +63,7 @@ func TestRenderIonic(t *testing.T) {
 		}, {
 			"ID": "FormField_5",
 			"Type": "boolean",
-			"Label": "",
+			"Label": "是否选择",
 			"DefaultValue": "",
 			"Values": null,
 			"Validations": null,
@@ -72,6 +71,9 @@ func TestRenderIonic(t *testing.T) {
 		}]
 	}
 	`
+
+func TestRenderIonic(t *testing.T) {
+
 	var form = &NodeFormResult{}
 	err := json.Unmarshal([]byte(testString), form)
 	if err != nil {
@@ -83,6 +85,6 @@ func TestRenderIonic(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	// fmt.Println()
-	ioutil.WriteFile("../tmp", result, 0644)
+	fmt.Println(string(result))
+	ioutil.WriteFile("./tmp/index.html", result, 0644)
 }

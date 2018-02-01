@@ -30,5 +30,8 @@
     npm install http-server -g
 
 运行http-server
+
     cd /home/ubuntu/www
-    nohup http-server -g >> http-server.log &
+    nohup http-server -g --cors='*' >> http-server.log &
+
+其中cors允许跨域
