@@ -28,13 +28,10 @@ import (
 )
 
 func main() {
-	flow.Init(&db.Config{
-		DSN:          "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
-		Trace:        true,
-		MaxIdleConns: 100,
-		MaxOpenConns: 100,
-		MaxLifetime:  time.Hour * 2,
-  })
+	flow.Init(
+		db.SetDSN("root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8"),
+		db.SetTrace(true),
+	)
 }
 
 ```
