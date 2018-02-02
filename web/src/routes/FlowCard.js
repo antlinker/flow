@@ -1,86 +1,124 @@
-import React, { PureComponent } from "react";
-import { connect } from "dva";
-import { Card, Form, Layout, Button, notification, Modal } from "antd";
+import React, { PureComponent } from 'react';
+import { connect } from 'dva';
+import { Card, Form, Layout, Button, notification, Modal } from 'antd';
 
-var BpmnModeler = require("bpmn-js/lib/Modeler");
-var propertiesPanelModule = require("bpmn-js-properties-panel");
-var propertiesProviderModule = require("bpmn-js-properties-panel/lib/provider/camunda");
-var camundaModdleDescriptor = require("camunda-bpmn-moddle/resources/camunda");
-var fileDownload = require("js-file-download");
+import AceEditor from 'react-ace';
+
+import 'brace/mode/xml';
+import 'brace/theme/github';
+
+const BpmnModeler = require('bpmn-js/lib/Modeler');
+const propertiesPanelModule = require('bpmn-js-properties-panel');
+const propertiesProviderModule = require('bpmn-js-properties-panel/lib/provider/camunda');
+const camundaModdleDescriptor = require('camunda-bpmn-moddle/resources/camunda');
+const fileDownload = require('js-file-download');
 
 const { confirm } = Modal;
 @connect(state => ({ flow: state.flow }))
 @Form.create()
 export default class FlowCard extends PureComponent {
+  state = {
+    editorVisible: false,
+    bpmnXML: '',
+  };
+
   componentDidMount() {
-    var bpmnModeler = new BpmnModeler({
-      container: "#js-canvas",
+    const bpmnModeler = new BpmnModeler({
+      container: '#js-canvas',
       propertiesPanel: {
-        parent: "#js-properties-panel"
+        parent: '#js-properties-panel',
       },
       additionalModules: [propertiesPanelModule, propertiesProviderModule],
       moddleExtensions: {
-        camunda: camundaModdleDescriptor
-      }
+        camunda: camundaModdleDescriptor,
+      },
     });
 
-    bpmnModeler.createDiagram(function(err) {
+    bpmnModeler.createDiagram((err) => {
       if (err) {
-        notification.error({ message: "设计器加载失败" });
-        return console.error(err);
+        notification.error({ message: `设计器加载失败:${err}` });
       }
     });
 
     this.props.dispatch({
-      type: "flow/loadForm",
+      type: 'flow/loadForm',
       payload: this.props.match.params,
-      bpmnModeler: bpmnModeler
+      bpmnModeler,
     });
   }
+
+  onEditorChange = (val) => {
+    this.setState({ bpmnXML: val });
+  };
+
+  onModalCancelClick = () => {
+    this.setState({ editorVisible: false });
+  };
+
+  onModalOKClick = () => {
+    this.setState({ editorVisible: false });
+    this.props.flow.bpmnModeler.importXML(this.state.bpmnXML, (err) => {
+      if (err) {
+        notification.error({ message: `设计器加载失败:${err}` });
+      }
+    });
+  };
 
   onSaveOKClick = () => {
     const that = this;
     this.props.flow.bpmnModeler.saveXML({ format: true }, (err, xml) => {
       if (err) {
-        notification.error({ message: "保存XML文件失败" });
-        return console.error(err);
+        notification.error({ message: `保存XML文件失败:${err}` });
+        return;
       }
 
       that.props.dispatch({
-        type: "flow/submit",
-        payload: { xml }
+        type: 'flow/submit',
+        payload: { xml },
       });
     });
   };
 
   onSaveClick = () => {
     confirm({
-      title: "确认保存该流程吗？",
-      content: "流程保存之后不允许修改！",
-      okText: "确认",
-      okType: "danger",
-      cancelText: "取消",
-      onOk: this.onSaveOKClick.bind(this)
+      title: '确认保存该流程吗？',
+      content: '流程保存之后不允许修改！',
+      okText: '确认',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: this.onSaveOKClick.bind(this),
+    });
+  };
+
+  onEditXMLClick = () => {
+    const that = this;
+    this.setState({ editorVisible: true });
+    this.props.flow.bpmnModeler.saveXML({ format: true }, (err, xml) => {
+      if (err) {
+        notification.error({ message: `导出XML失败：${err}` });
+        return;
+      }
+      that.setState({ bpmnXML: xml });
     });
   };
 
   onExportXMLClick = () => {
     this.props.flow.bpmnModeler.saveXML({ format: true }, (err, xml) => {
       if (err) {
-        notification.error({ message: "保存XML文件失败" });
-        return console.error(err);
+        notification.error({ message: `导出XML失败：${err}` });
+        return;
       }
-      fileDownload(xml, "diagram.xml");
+      fileDownload(xml, 'diagram.xml');
     });
   };
 
   onExportSVGClick = () => {
     this.props.flow.bpmnModeler.saveSVG((err, svg) => {
       if (err) {
-        notification.error({ message: "保存SVG文件失败" });
-        return console.error(err);
+        notification.error({ message: `导出SVG失败：${err}` });
+        return;
       }
-      fileDownload(svg, "diagram.svg");
+      fileDownload(svg, 'diagram.svg');
     });
   };
 
@@ -93,6 +131,9 @@ export default class FlowCard extends PureComponent {
           type="primary"
           loading={submitting}
           onClick={this.onSaveClick}
+          style={{
+            marginRight: 8,
+          }}
         >
           保存
         </Button>
@@ -105,35 +146,35 @@ export default class FlowCard extends PureComponent {
 
     return (
       <Card
-        title={formData.name ? formData.name + " - " + formTitle : formTitle}
+        title={formData.name ? `${formData.name} - ${formTitle}` : formTitle}
         extra={<a onClick={this.props.history.goBack}>返回</a>}
       >
         <Layout
           style={{
-            position: "fixed",
+            position: 'fixed',
             top: 56,
             left: 0,
             bottom: 0,
-            right: 0
+            right: 0,
           }}
         >
           <Layout.Content
             style={{
-              backgroundSize: "50px 50px",
+              backgroundSize: '50px 50px',
               backgroundImage:
-                "linear-gradient(to right, gainsboro 1px, transparent 1px), linear-gradient(to bottom, gainsboro 1px, transparent 1px)",
-              overflow: "auto",
-              position: "absolute",
+                'linear-gradient(to right, gainsboro 1px, transparent 1px), linear-gradient(to bottom, gainsboro 1px, transparent 1px)',
+              overflow: 'auto',
+              position: 'absolute',
               top: 0,
               left: 0,
               bottom: 50,
-              right: 260
+              right: 260,
             }}
           >
             <div
               id="js-canvas"
               style={{
-                height: "100%"
+                height: '100%',
               }}
             />
           </Layout.Content>
@@ -141,37 +182,40 @@ export default class FlowCard extends PureComponent {
             breakpoint="md"
             width={260}
             style={{
-              background: "#fff",
-              overflow: "auto",
-              position: "absolute",
+              background: '#fff',
+              overflow: 'auto',
+              position: 'absolute',
               top: 0,
               bottom: 50,
-              right: 0
+              right: 0,
             }}
           >
             <div id="js-properties-panel" />
           </Layout.Sider>
           <Layout.Footer
             style={{
-              background: "#fff",
-              position: "absolute",
+              background: '#fff',
+              position: 'absolute',
               height: 50,
               left: 0,
               bottom: 0,
               right: 0,
               padding: 0,
-              textAlign: "center"
+              textAlign: 'center',
             }}
           >
             <Form layout="inline">
               <Form.Item>
                 {this.renderSubmit()}
+                <Button icon="edit" type="dashed" onClick={this.onEditXMLClick}>
+                  编辑XML
+                </Button>
                 <Button
                   icon="download"
                   type="dashed"
                   onClick={this.onExportXMLClick}
                   style={{
-                    marginLeft: 8
+                    marginLeft: 8,
                   }}
                 >
                   导出XML
@@ -181,7 +225,7 @@ export default class FlowCard extends PureComponent {
                   type="dashed"
                   onClick={this.onExportSVGClick}
                   style={{
-                    marginLeft: 8
+                    marginLeft: 8,
                   }}
                 >
                   导出SVG
@@ -190,6 +234,35 @@ export default class FlowCard extends PureComponent {
             </Form>
           </Layout.Footer>
         </Layout>
+
+        <Modal
+          title="编辑XML"
+          width={1000}
+          visible={this.state.editorVisible}
+          onOk={this.onModalOKClick}
+          onCancel={this.onModalCancelClick}
+        >
+          <AceEditor
+            mode="xml"
+            theme="github"
+            name="xmlEditor"
+            width="950px"
+            height="450px"
+            onChange={this.onEditorChange}
+            fontSize={14}
+            showPrintMargin
+            showGutter
+            highlightActiveLine
+            value={this.state.bpmnXML}
+            setOptions={{
+              enableBasicAutocompletion: false,
+              enableLiveAutocompletion: false,
+              enableSnippets: false,
+              showLineNumbers: true,
+              tabSize: 2,
+            }}
+          />
+        </Modal>
       </Card>
     );
   }

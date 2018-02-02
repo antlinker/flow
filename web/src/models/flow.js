@@ -1,28 +1,28 @@
-import { routerRedux } from "dva/router";
-import { notification, message } from "antd";
-import { queryPage, get, del, save } from "../services/flow";
+import { routerRedux } from 'dva/router';
+import { notification, message } from 'antd';
+import { queryPage, get, del, save } from '../services/flow';
 
 export default {
-  namespace: "flow",
+  namespace: 'flow',
   state: {
     loading: false,
     data: {
       list: [],
-      pagination: {}
+      pagination: {},
     },
     search: {},
     bpmnModeler: undefined,
-    formAction: "",
-    formTitle: "",
+    formAction: '',
+    formTitle: '',
     submitVisible: true,
     formData: {},
-    submitting: false
+    submitting: false,
   },
   effects: {
     *fetch({ payload, pagination }, { call, put, select }) {
       yield put({
-        type: "changeLoading",
-        payload: true
+        type: 'changeLoading',
+        payload: true,
       });
 
       let search = yield select(state => state.flow.search);
@@ -30,8 +30,8 @@ export default {
       if (payload) {
         search = { ...search, ...payload };
         yield put({
-          type: "saveSearch",
-          payload: payload
+          type: 'saveSearch',
+          payload,
         });
       }
 
@@ -41,91 +41,90 @@ export default {
 
       const response = yield call(queryPage, search);
       yield put({
-        type: "saveData",
-        payload: response
+        type: 'saveData',
+        payload: response,
       });
 
       yield put({
-        type: "changeLoading",
-        payload: false
+        type: 'changeLoading',
+        payload: false,
       });
     },
-    *loadForm({ payload, bpmnModeler }, { call, put, select }) {
+    *loadForm({ payload, bpmnModeler }, { call, put }) {
       yield [
         put({
-          type: "saveBpmnModeler",
-          payload: bpmnModeler
+          type: 'saveBpmnModeler',
+          payload: bpmnModeler,
         }),
         put({
-          type: "saveFormAction",
-          payload: payload.action
+          type: 'saveFormAction',
+          payload: payload.action,
         }),
         put({
-          type: "changeSubmitVisible",
-          payload: true
-        })
+          type: 'changeSubmitVisible',
+          payload: true,
+        }),
       ];
 
-      if (payload.action === "add") {
+      if (payload.action === 'add') {
         yield put({
-          type: "saveFormTitle",
-          payload: "新建流程"
+          type: 'saveFormTitle',
+          payload: '新建流程',
         });
       } else {
-        if (payload.action === "copy") {
+        if (payload.action === 'copy') {
           yield put({
-            type: "saveFormTitle",
-            payload: "复制流程"
+            type: 'saveFormTitle',
+            payload: '复制流程',
           });
-        } else if (payload.action === "view") {
+        } else if (payload.action === 'view') {
           yield put({
-            type: "saveFormTitle",
-            payload: "查看流程"
+            type: 'saveFormTitle',
+            payload: '查看流程',
           });
           yield put({
-            type: "changeSubmitVisible",
-            payload: false
+            type: 'changeSubmitVisible',
+            payload: false,
           });
         }
 
         const response = yield call(get, { record_id: payload.id });
         yield put({
-          type: "saveFormData",
-          payload: response
+          type: 'saveFormData',
+          payload: response,
         });
-        bpmnModeler.importXML(response.xml, err => {
+        bpmnModeler.importXML(response.xml, (err) => {
           if (err) {
-            notification.error({ message: "设计器加载失败" });
-            return console.error(err);
+            notification.error({ message: `设计器加载失败:${err}` });
           }
         });
       }
     },
     *delete({ payload }, { call, put }) {
       const response = yield call(del, payload);
-      if (response === "ok") {
-        message.success("删除成功");
+      if (response === 'ok') {
+        message.success('删除成功');
         yield put({
-          type: "fetch"
+          type: 'fetch',
         });
       }
     },
-    *submit({ payload }, { call, put, select }) {
+    *submit({ payload }, { call, put }) {
       yield put({
-        type: "changeSubmitting",
-        payload: true
+        type: 'changeSubmitting',
+        payload: true,
       });
 
       const response = yield call(save, payload);
-      if (response === "ok") {
+      if (response === 'ok') {
         yield put({
-          type: "changeSubmitting",
-          payload: false
+          type: 'changeSubmitting',
+          payload: false,
         });
-        message.success("保存成功");
-        yield put(routerRedux.push("/"));
+        message.success('保存成功');
+        yield put(routerRedux.push('/'));
       }
-    }
+    },
   },
   reducers: {
     changeLoading(state, action) {
@@ -154,6 +153,6 @@ export default {
     },
     changeSubmitting(state, action) {
       return { ...state, submitting: action.payload };
-    }
-  }
+    },
+  },
 };
