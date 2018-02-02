@@ -3,37 +3,35 @@ package flow_test
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
 	"gitee.com/antlinker/flow"
-	"gitee.com/antlinker/flow/service/db"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func init() {
-	flow.Init(&db.Config{
-		DSN:          "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
-		Trace:        false,
-		MaxIdleConns: 100,
-		MaxOpenConns: 100,
-		MaxLifetime:  time.Hour * 2,
-	})
+// func init() {
+// 	flow.Init(&db.Config{
+// 		DSN:          "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
+// 		Trace:        false,
+// 		MaxIdleConns: 100,
+// 		MaxOpenConns: 100,
+// 		MaxLifetime:  time.Hour * 2,
+// 	})
 
-	err := flow.LoadFile("test_data/leave.bpmn")
-	if err != nil {
-		panic(err)
-	}
+// 	err := flow.LoadFile("test_data/leave.bpmn")
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	err = flow.LoadFile("test_data/apply_sqltest.bpmn")
-	if err != nil {
-		panic(err)
-	}
+// 	err = flow.LoadFile("test_data/apply_sqltest.bpmn")
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	err = flow.LoadFile("test_data/parallel_test.bpmn")
-	if err != nil {
-		panic(err)
-	}
-}
+// 	err = flow.LoadFile("test_data/parallel_test.bpmn")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
 func TestLeaveBzrApprovalPass(t *testing.T) {
 	var (
