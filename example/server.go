@@ -27,10 +27,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	flow.Init(&db.Config{
-		DSN:   dsn,
-		Trace: true,
-	})
+	flow.Init(db.SetDSN(dsn), db.SetTrace(true))
 
 	serverOptions := []flow.ServerOption{
 		flow.ServerStaticRootOption(staticRoot),

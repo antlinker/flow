@@ -10,9 +10,11 @@ import (
 	"time"
 
 	"gitee.com/antlinker/flow/bll"
+	"gitee.com/antlinker/flow/register"
 	"gitee.com/antlinker/flow/schema"
 	"gitee.com/antlinker/flow/service/db"
 	"gitee.com/antlinker/flow/util"
+	"github.com/facebookgo/inject"
 	"github.com/pkg/errors"
 )
 
@@ -24,12 +26,34 @@ type Engine struct {
 }
 
 // Init 初始化流程引擎
-func (e *Engine) Init(db *db.DB, parser Parser, execer Execer) *Engine {
-	blls := new(bll.All).Init(db)
-	e.flowBll = blls.Flow
+func (e *Engine) Init(db *db.DB, parser Parser, execer Execer) (*Engine, error) {
+
+	var (
+		g       inject.Graph
+		flowBll bll.Flow
+	)
+
+	err := g.Provide(&inject.Object{Value: db},
+		&inject.Object{Value: &flowBll})
+	if err != nil {
+		return e, err
+	}
+
+	err = g.Populate()
+	if err != nil {
+		return e, err
+	}
+
+	register.FlowDBMap(db)
+	err = db.CreateTablesIfNotExists()
+	if err != nil {
+		return e, err
+	}
+
+	e.flowBll = &flowBll
 	e.parser = parser
 	e.execer = execer
-	return e
+	return e, nil
 }
 
 // SetParser 设定解析器

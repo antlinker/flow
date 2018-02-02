@@ -14,12 +14,16 @@ var (
 )
 
 // Init 初始化流程配置
-func Init(dbConfig *db.Config) {
-	db, err := db.NewDB(dbConfig)
+func Init(opts ...db.Option) {
+	db, err := db.NewMySQL(opts...)
 	if err != nil {
 		panic(err)
 	}
-	engine = new(Engine).Init(db, NewXMLParser(), NewQLangExecer())
+	e, err := new(Engine).Init(db, NewXMLParser(), NewQLangExecer())
+	if err != nil {
+		panic(err)
+	}
+	engine = e
 	sql.Reg(db.Db)
 }
 
