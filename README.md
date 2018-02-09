@@ -110,5 +110,23 @@ func filter(ctx *gear.Context) error {
 }
 ```
 
+### 8. 查询流程待办数据
+
+```go
+	result,err := flow.QueryTodoFlows("流程编号","流程处理人ID")
+	if err != nil {
+		// 处理错误
+	}
+```
+
+### 9. 查询流程历史数据
+
+```go
+result,err := flow.QueryFlowHistory("待办流程实例ID")
+if err != nil {
+	// 处理错误
+}
+```
+
 ![流程管理](example/screenshots/QQ20180123-175942@2x.png)
 ![流程设计器](example/screenshots/QQ20180123-180022@2x.png)
