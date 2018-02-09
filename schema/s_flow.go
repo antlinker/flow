@@ -204,6 +204,17 @@ type FlowTodoResult struct {
 	FormData       *string `db:"form_data" structs:"form_data" json:"form_data"`                      // 表单数据
 }
 
+// FlowHistoryResult 流程历史结果
+type FlowHistoryResult struct {
+	RecordID    string `db:"record_id,size:36" structs:"record_id" json:"record_id"`  // 记录内码(uuid)
+	NodeCode    string `db:"node_code,size:36" structs:"node_code" json:"node_code"`  // 节点编号
+	NodeName    string `db:"node_name,size:36" structs:"node_name" json:"node_name"`  // 节点名称
+	Processor   string `db:"processor,size:36" structs:"processor" json:"processor"`  // 处理人
+	ProcessTime int64  `db:"process_time" structs:"process_time" json:"process_time"` // 处理时间(秒时间戳)
+	OutData     string `db:"out_data,size:1024" structs:"out_data" json:"out_data"`   // 输出数据
+	Status      int64  `db:"status" structs:"status" json:"status"`                   // 处理状态(1:待处理 2:已完成)
+}
+
 // NodeOperating 节点操作
 type NodeOperating struct {
 	NodeGroup       []*Node

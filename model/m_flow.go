@@ -403,3 +403,15 @@ func (a *Flow) DeleteFlow(flowID string) error {
 	}
 	return nil
 }
+
+// QueryHistory 查询流程实例历史数据
+func (a *Flow) QueryHistory(flowInstanceID string) ([]*schema.FlowHistoryResult, error) {
+	query := fmt.Sprintf("SELECT ni.processor,ni.process_time,ni.out_data,ni.status,n.code 'node_code',n.name 'node_name' FROM %s ni JOIN %s n ON ni.node_id=n.record_id AND n.deleted=ni.deleted WHERE ni.deleted=0 AND ni.flow_instance_id=? ORDER BY ni.status DESC,ni.process_time", schema.NodeInstanceTableName, schema.NodeTableName)
+
+	var items []*schema.FlowHistoryResult
+	_, err := a.DB.Select(&items, query, flowInstanceID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询流程实例历史数据发生错误")
+	}
+	return items, nil
+}

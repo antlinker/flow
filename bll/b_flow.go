@@ -197,3 +197,8 @@ func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize u
 func (a *Flow) DeleteFlow(flowID string) error {
 	return a.FlowModel.DeleteFlow(flowID)
 }
+
+// QueryHistory 查询流程实例历史数据
+func (a *Flow) QueryHistory(flowInstanceID string) ([]*schema.FlowHistoryResult, error) {
+	return a.FlowModel.QueryHistory(flowInstanceID)
+}
