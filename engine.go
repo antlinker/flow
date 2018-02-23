@@ -265,8 +265,9 @@ func (e *Engine) CreateFlow(data []byte) error {
 
 // HandleResult 处理结果
 type HandleResult struct {
-	IsEnd     bool        // 是否结束
-	NextNodes []*NextNode // 下一处理节点
+	IsEnd        bool                 `json:"is_end"`        // 是否结束
+	NextNodes    []*NextNode          `json:"next_nodes"`    // 下一处理节点
+	FlowInstance *schema.FlowInstance `json:"flow_instance"` // 流程实例
 }
 
 func (r *HandleResult) String() string {
@@ -308,6 +309,7 @@ func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte)
 	if err != nil {
 		return nil, err
 	}
+	result.FlowInstance = nr.GetFlowInstance()
 
 	return &result, nil
 }

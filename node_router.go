@@ -119,6 +119,11 @@ func (n *NodeRouter) next(nodeInstanceID, processor string) (*NodeRouter, error)
 	return nextRouter, nil
 }
 
+// GetFlowInstance 获取流程实例
+func (n *NodeRouter) GetFlowInstance() *schema.FlowInstance {
+	return n.flowInstance
+}
+
 // Next 流向下一节点
 func (n *NodeRouter) Next(processor string) error {
 	nodeType, err := GetNodeTypeByName(n.node.TypeCode)
