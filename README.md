@@ -128,5 +128,14 @@ if err != nil {
 }
 ```
 
+### 10. 查询已办理的流程实例ID列表
+
+```go
+ids,err := flow.QueryDoneFlowIDs("流程编号","流程处理人ID")
+if err != nil {
+	// 处理错误
+}
+```
+
 ![流程管理](example/screenshots/QQ20180123-175942@2x.png)
 ![流程设计器](example/screenshots/QQ20180123-180022@2x.png)

@@ -415,3 +415,21 @@ func (a *Flow) QueryHistory(flowInstanceID string) ([]*schema.FlowHistoryResult,
 	}
 	return items, nil
 }
+
+// QueryDoneIDs 查询已办理的流程实例ID列表
+func (a *Flow) QueryDoneIDs(flowID, userID string) ([]string, error) {
+	query := fmt.Sprintf("SELECT record_id FROM %s WHERE deleted=0 AND flow_id=? AND record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=2 AND processor=?)", schema.FlowInstanceTableName, schema.NodeInstanceTableName)
+
+	var items []*schema.FlowInstance
+	_, err := a.DB.Select(&items, query, flowID, userID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询已办理的流程数据发生错误")
+	}
+
+	ids := make([]string, len(items))
+	for i, item := range items {
+		ids[i] = item.RecordID
+	}
+
+	return ids, nil
+}

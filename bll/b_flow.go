@@ -202,3 +202,14 @@ func (a *Flow) DeleteFlow(flowID string) error {
 func (a *Flow) QueryHistory(flowInstanceID string) ([]*schema.FlowHistoryResult, error) {
 	return a.FlowModel.QueryHistory(flowInstanceID)
 }
+
+// QueryDoneIDs 查询已办理的流程实例ID列表
+func (a *Flow) QueryDoneIDs(flowCode, userID string) ([]string, error) {
+	flow, err := a.FlowModel.GetFlowByCode(flowCode)
+	if err != nil {
+		return nil, err
+	} else if flow == nil {
+		return nil, nil
+	}
+	return a.FlowModel.QueryDoneIDs(flow.RecordID, userID)
+}

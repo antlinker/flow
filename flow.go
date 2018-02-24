@@ -85,6 +85,11 @@ func QueryFlowHistory(flowInstanceID string) ([]*schema.FlowHistoryResult, error
 	return engine.QueryFlowHistory(flowInstanceID)
 }
 
+// QueryDoneFlowIDs 查询已办理的流程实例ID列表
+func QueryDoneFlowIDs(flowCode, userID string) ([]string, error) {
+	return engine.QueryDoneFlowIDs(flowCode, userID)
+}
+
 // StartServer 启动管理服务
 func StartServer(opts ...ServerOption) http.Handler {
 	srv := new(Server).Init(engine, opts...)
