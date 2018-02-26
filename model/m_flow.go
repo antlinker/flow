@@ -308,7 +308,9 @@ func (a *Flow) QueryTodo(flowID, userID string) ([]*schema.FlowTodoResult, error
 	  ni.node_id,
 	  f.data 'form_data',
 	  fi.launcher,
-	  fi.launch_time
+	  fi.launch_time,
+		n.code 'node_code',
+		n.name 'node_name'
 	FROM %s ni
 	  JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
 	  LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
