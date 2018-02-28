@@ -137,5 +137,14 @@ if err != nil {
 }
 ```
 
+### 11. 查询节点实例的候选人ID列表
+
+```go
+ids,err := flow.QueryNodeCandidates("待办流程节点实例ID")
+if err != nil {
+	// 处理错误
+}
+```
+
 ![流程管理](example/screenshots/QQ20180123-175942@2x.png)
 ![流程设计器](example/screenshots/QQ20180123-180022@2x.png)

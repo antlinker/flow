@@ -90,6 +90,11 @@ func QueryDoneFlowIDs(flowCode, userID string) ([]string, error) {
 	return engine.QueryDoneFlowIDs(flowCode, userID)
 }
 
+// QueryNodeCandidates 查询节点实例的候选人ID列表
+func QueryNodeCandidates(nodeInstanceID string) ([]string, error) {
+	return engine.QueryNodeCandidates(nodeInstanceID)
+}
+
 // StartServer 启动管理服务
 func StartServer(opts ...ServerOption) http.Handler {
 	srv := new(Server).Init(engine, opts...)

@@ -371,3 +371,19 @@ func (e *Engine) QueryFlowHistory(flowInstanceID string) ([]*schema.FlowHistoryR
 func (e *Engine) QueryDoneFlowIDs(flowCode, userID string) ([]string, error) {
 	return e.flowBll.QueryDoneIDs(flowCode, userID)
 }
+
+// QueryNodeCandidates 查询节点实例的候选人ID列表
+func (e *Engine) QueryNodeCandidates(nodeInstanceID string) ([]string, error) {
+	candidates, err := e.flowBll.QueryNodeCandidates(nodeInstanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, len(candidates))
+
+	for i, c := range candidates {
+		ids[i] = c.CandidateID
+	}
+
+	return ids, nil
+}
