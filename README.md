@@ -146,5 +146,16 @@ if err != nil {
 }
 ```
 
+### 12. 停止流程实例
+
+```go
+	err := flow.StopFlowInstance("待办流程节点实例ID", func(flowInstance *schema.FlowInstance) bool {
+		return flowInstance.Launcher == "XXX"
+	})
+	if err != nil {
+		// 处理错误
+	}
+```
+
 ![流程管理](example/screenshots/QQ20180123-175942@2x.png)
 ![流程设计器](example/screenshots/QQ20180123-180022@2x.png)

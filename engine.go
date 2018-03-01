@@ -354,6 +354,20 @@ func (e *Engine) StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInst
 	return e.flowBll.StopFlowInstance(flowInstance.RecordID)
 }
 
+// StopFlowInstance 停止流程实例
+func (e *Engine) StopFlowInstance(flowInstanceID string, allowStop func(*schema.FlowInstance) bool) error {
+	flowInstance, err := e.flowBll.GetFlowInstance(flowInstanceID)
+	if err != nil {
+		return err
+	}
+
+	if allowStop != nil && !allowStop(flowInstance) {
+		return errors.New("不允许停止流程")
+	}
+
+	return e.flowBll.StopFlowInstance(flowInstanceID)
+}
+
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
