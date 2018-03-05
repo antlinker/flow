@@ -100,6 +100,11 @@ func QueryNodeCandidates(nodeInstanceID string) ([]string, error) {
 	return engine.QueryNodeCandidates(nodeInstanceID)
 }
 
+// GetNodeInstance 获取节点实例
+func GetNodeInstance(nodeInstanceID string) (*schema.NodeInstance, error) {
+	return engine.GetNodeInstance(nodeInstanceID)
+}
+
 // StartServer 启动管理服务
 func StartServer(opts ...ServerOption) http.Handler {
 	srv := new(Server).Init(engine, opts...)

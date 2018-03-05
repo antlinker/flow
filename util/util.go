@@ -9,7 +9,7 @@ import (
 
 // UUID 获取UUID
 func UUID() string {
-	return uuid.NewV4().String()
+	return uuid.Must(uuid.NewV4()).String()
 }
 
 // StructToMap 转换struct为map

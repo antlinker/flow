@@ -401,3 +401,8 @@ func (e *Engine) QueryNodeCandidates(nodeInstanceID string) ([]string, error) {
 
 	return ids, nil
 }
+
+// GetNodeInstance 获取节点实例
+func (e *Engine) GetNodeInstance(nodeInstanceID string) (*schema.NodeInstance, error) {
+	return e.flowBll.GetNodeInstance(nodeInstanceID)
+}
