@@ -179,13 +179,7 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 
 // QueryTodo 查询用户的待办节点实例数据
 func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
-	flow, err := a.FlowModel.GetFlowByCode(flowCode)
-	if err != nil {
-		return nil, err
-	} else if flow == nil {
-		return nil, nil
-	}
-	return a.FlowModel.QueryTodo(flow.RecordID, userID)
+	return a.FlowModel.QueryTodo(flowCode, userID)
 }
 
 // QueryFlowPage 查询流程分页数据

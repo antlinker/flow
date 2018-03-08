@@ -299,7 +299,7 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 }
 
 // QueryTodo 查询用户的待办数据
-func (a *Flow) QueryTodo(flowID, userID string) ([]*schema.FlowTodoResult, error) {
+func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
 	query := fmt.Sprintf(`
 	SELECT
 	  ni.record_id,
@@ -315,14 +315,14 @@ func (a *Flow) QueryTodo(flowID, userID string) ([]*schema.FlowTodoResult, error
 	  JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
 	  LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
 	  LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
-	WHERE ni.deleted = 0 AND ni.status = 1 AND fi.status = 1 AND fi.flow_id = ?
+	WHERE ni.deleted = 0 AND ni.status = 1 AND fi.status = 1 AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)
 	      AND ni.record_id IN (SELECT node_instance_id
 	                           FROM %s
 	                           WHERE deleted = 0 AND candidate_id = ?)
-	`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.NodeCandidateTableName)
+	`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.FlowTableName, schema.NodeCandidateTableName)
 
 	var items []*schema.FlowTodoResult
-	_, err := a.DB.Select(&items, query, flowID, userID)
+	_, err := a.DB.Select(&items, query, flowCode, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "查询用户的待办数据发生错误")
 	}
@@ -419,11 +419,11 @@ func (a *Flow) QueryHistory(flowInstanceID string) ([]*schema.FlowHistoryResult,
 }
 
 // QueryDoneIDs 查询已办理的流程实例ID列表
-func (a *Flow) QueryDoneIDs(flowID, userID string) ([]string, error) {
-	query := fmt.Sprintf("SELECT record_id FROM %s WHERE deleted=0 AND flow_id=? AND record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=2 AND processor=?)", schema.FlowInstanceTableName, schema.NodeInstanceTableName)
+func (a *Flow) QueryDoneIDs(flowCode, userID string) ([]string, error) {
+	query := fmt.Sprintf("SELECT record_id FROM %s WHERE deleted=0 AND flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?) AND record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=2 AND processor=?)", schema.FlowInstanceTableName, schema.FlowTableName, schema.NodeInstanceTableName)
 
 	var items []*schema.FlowInstance
-	_, err := a.DB.Select(&items, query, flowID, userID)
+	_, err := a.DB.Select(&items, query, flowCode, userID)
 	if err != nil {
 		return nil, errors.Wrapf(err, "查询已办理的流程数据发生错误")
 	}
