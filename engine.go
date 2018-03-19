@@ -335,6 +335,12 @@ func (e *Engine) StartFlow(flowCode, nodeCode, userID string, inputData []byte) 
 // userID 处理人
 // inputData 输入数据
 func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+	nodeInstance, err := e.flowBll.GetNodeInstance(nodeInstanceID)
+	if err != nil {
+		return nil, err
+	} else if nodeInstance.Status != 1 {
+		return nil, nil
+	}
 	return e.nextFlowHandle(nodeInstanceID, userID, inputData)
 }
 
