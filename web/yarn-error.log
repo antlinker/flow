@@ -56,4 +56,4 @@ Lockfile:
   No lockfile
 
 Trace: 
-  Error: EINVAL: invalid argument, unlink '/Users/lyric/go/src/gitee.com/antlinker/flow/web/node_modules/postcss-modules-extract-imports/node_modules/postcss'
+  Error: EINVAL: invalid argument, unlink '/Users/lyric/go/src/ant-flow/web/node_modules/postcss-modules-extract-imports/node_modules/postcss'

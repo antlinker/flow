@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"gitee.com/antlinker/flow/bll"
-	"gitee.com/antlinker/flow/register"
-	"gitee.com/antlinker/flow/schema"
-	"gitee.com/antlinker/flow/service/db"
-	"gitee.com/antlinker/flow/util"
+	"ant-flow/bll"
+	"ant-flow/register"
+	"ant-flow/schema"
+	"ant-flow/service/db"
+	"ant-flow/util"
 	"github.com/facebookgo/inject"
 	"github.com/pkg/errors"
 )

@@ -9,8 +9,8 @@
 
 ```bash
 cd $GOPATH/src
-git clone https://gitee.com/antlinker/flow.git gitee.com/antlinker/flow
-cd gitee.com/antlinker/flow
+git clone https://gogs.xiaoyuanjijiehao.com/antlinker/flow.git ant-flow
+cd ant-flow
 go install -v ./...
 ```
 
@@ -22,8 +22,8 @@ go install -v ./...
 import (
 	"time"
 
-	"gitee.com/antlinker/flow"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow"
+	"ant-flow/service/db"
 	_ "github.com/go-sql-driver/mysql"
 )
 

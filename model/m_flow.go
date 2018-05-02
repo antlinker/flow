@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"gitee.com/antlinker/flow/schema"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow/schema"
+	"ant-flow/service/db"
 	"github.com/pkg/errors"
 )
 

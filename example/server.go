@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitee.com/antlinker/flow"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow"
+	"ant-flow/service/db"
 	"github.com/LyricTian/logger"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/teambition/gear"

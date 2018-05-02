@@ -1,8 +1,8 @@
 package register
 
 import (
-	"gitee.com/antlinker/flow/schema"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow/schema"
+	"ant-flow/service/db"
 )
 
 // FlowDBMap 注册流程相关的数据库映射

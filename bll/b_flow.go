@@ -3,9 +3,9 @@ package bll
 import (
 	"time"
 
-	"gitee.com/antlinker/flow/model"
-	"gitee.com/antlinker/flow/schema"
-	"gitee.com/antlinker/flow/util"
+	"ant-flow/model"
+	"ant-flow/schema"
+	"ant-flow/util"
 )
 
 // Flow 流程管理

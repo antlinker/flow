@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"gitee.com/antlinker/flow/expression/sql"
-	"gitee.com/antlinker/flow/schema"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow/expression/sql"
+	"ant-flow/schema"
+	"ant-flow/service/db"
 )
 
 var (
