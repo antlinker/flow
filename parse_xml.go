@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"ant-flow/util"
+
 	"github.com/beevik/etree"
 )
 
@@ -21,7 +22,7 @@ func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, er
 	var err error
 
 	doc := etree.NewDocument()
-	if err := doc.ReadFromBytes(content); err != nil {
+	if err = doc.ReadFromBytes(content); err != nil {
 		panic(err)
 	}
 
@@ -63,6 +64,7 @@ func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, er
 		nodeResult.CandidateExpressions = node.CandidateUsers
 		// yupengfei 2018-01-17 增加了form的解析
 		nodeResult.FormResult = node.FormResult
+		nodeResult.Properties = node.Properties
 		nodeMap[nodeResult.NodeID] = &nodeResult
 		// 如果节点是一个路由的话，需要特殊处理
 	}
@@ -107,6 +109,7 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 		candidateUserList := strings.Split(candidateUsers.Value, ";")
 		node.CandidateUsers = candidateUserList
 	}
+
 	if extensionElements := element.SelectElement("extensionElements"); extensionElements != nil {
 		if formData := extensionElements.SelectElement("formData"); formData != nil {
 			form, err := p.ParseFormData(formData)
@@ -120,29 +123,47 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 			}
 			node.FormResult = form
 		}
+
+		if propertyData := extensionElements.SelectElement("properties"); propertyData != nil {
+			// 解析节点属性
+			for _, p := range propertyData.SelectElements("property") {
+				var item PropertyResult
+				if name := p.SelectAttr("name"); name != nil {
+					item.Name = name.Value
+				}
+				if value := p.SelectAttr("value"); value != nil {
+					item.Value = value.Value
+				}
+
+				if item.Name != "" {
+					node.Properties = append(node.Properties, &item)
+				}
+			}
+		}
 	}
+
 	return &node, nil
 }
 
 func (p *xmlParser) ParsesequenceFlow(element *etree.Element) (*sequenceFlow, error) {
 	hasExpression := false
-	var sequenceFlow sequenceFlow
-	sequenceFlow.XMLName = element.Tag
-	sequenceFlow.Code = element.SelectAttr("id").Value
-	sequenceFlow.SourceRef = element.SelectAttr("sourceRef").Value
-	sequenceFlow.TargetRef = element.SelectAttr("targetRef").Value
+	var seq sequenceFlow
+	seq.XMLName = element.Tag
+	seq.Code = element.SelectAttr("id").Value
+	seq.SourceRef = element.SelectAttr("sourceRef").Value
+	seq.TargetRef = element.SelectAttr("targetRef").Value
 	for _, element := range element.ChildElements() {
 		if element.Tag == "documentation" {
-			sequenceFlow.Explain = element.Text()
+			seq.Explain = element.Text()
 		} else if element.Tag == "conditionExpression" {
-			sequenceFlow.Expression = element.Text()
+			seq.Expression = element.Text()
 			hasExpression = true
 		}
 	}
 	if !hasExpression {
-		sequenceFlow.Expression = ""
+		seq.Expression = ""
 	}
-	return &sequenceFlow, nil
+	return &seq, nil
 }
 
 func (p *xmlParser) ParseFormData(element *etree.Element) (*NodeFormResult, error) {
@@ -249,6 +270,7 @@ type nodeInfo struct {
 	Code           string
 	Name           string
 	CandidateUsers []string
+	Properties     []*PropertyResult
 	FormResult     *NodeFormResult
 }
 

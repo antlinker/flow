@@ -14,6 +14,7 @@ import (
 	"ant-flow/schema"
 	"ant-flow/service/db"
 	"ant-flow/util"
+
 	"github.com/facebookgo/inject"
 	"github.com/pkg/errors"
 )
@@ -95,20 +96,15 @@ func (e *Engine) LoadFile(name string) error {
 }
 
 func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *schema.Flow, node *schema.Node, formResult *NodeFormResult) {
-	if formResult.ID == "" && len(formResult.Fields) == 0 {
+	if formResult.ID == "" {
 		return
 	}
 
-	formExists := false
 	for _, f := range formOperating.FormGroup {
 		if f.Code == formResult.ID {
 			node.FormID = f.RecordID
-			formExists = true
-			break
+			return
 		}
-	}
-	if formExists || len(formResult.Fields) == 0 {
-		return
 	}
 
 	form := &schema.Form{
@@ -119,8 +115,17 @@ func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *s
 		Created:  flow.Created,
 	}
 
-	if form.Code == "" {
-		form.Code = util.UUID()
+	// 解析URL类型
+	if fields := formResult.Fields; len(fields) == 2 {
+		if fields[0].ID == "type_code" &&
+			fields[0].DefaultValue == "URL" &&
+			fields[1].ID == "data" {
+			form.TypeCode = "URL"
+			form.Data = fields[1].DefaultValue
+			formOperating.FormGroup = append(formOperating.FormGroup, form)
+			node.FormID = form.RecordID
+			return
+		}
 	}
 
 	meta, _ := json.Marshal(formResult.Fields)
@@ -228,6 +233,17 @@ func (e *Engine) parseOperating(flow *schema.Flow, nodeResults []*NodeResult) (*
 				Created:      flow.Created,
 			})
 		}
+
+		// 增加节点属性
+		for _, p := range n.Properties {
+			nodeOperating.PropertyGroup = append(nodeOperating.PropertyGroup, &schema.NodeProperty{
+				RecordID: util.UUID(),
+				NodeID:   getNodeRecordID(n.NodeID),
+				Name:     p.Name,
+				Value:    p.Value,
+				Created:  flow.Created,
+			})
+		}
 	}
 
 	return nodeOperating, formOperating
@@ -256,6 +272,7 @@ func (e *Engine) CreateFlow(data []byte) error {
 		Name:     result.FlowName,
 		Version:  result.FlowVersion,
 		XML:      string(data),
+		Status:   1,
 		Created:  time.Now().Unix(),
 	}
 

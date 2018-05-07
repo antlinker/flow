@@ -20,12 +20,13 @@ type ParseResult struct {
 
 // NodeResult 节点数据
 type NodeResult struct {
-	NodeID               string          // 节点ID
-	NodeName             string          // 节点名称
-	NodeType             NodeType        // 节点类型
-	Routers              []*RouterResult // 节点路由
-	CandidateExpressions []string        // 候选人表达式
-	FormResult           *NodeFormResult // 节点表单
+	NodeID               string            // 节点ID
+	NodeName             string            // 节点名称
+	NodeType             NodeType          // 节点类型
+	Routers              []*RouterResult   // 节点路由
+	Properties           []*PropertyResult // 节点属性
+	CandidateExpressions []string          // 候选人表达式
+	FormResult           *NodeFormResult   // 节点表单
 }
 
 // RouterResult 节点路由数据
@@ -33,6 +34,12 @@ type RouterResult struct {
 	TargetNodeID string // 目标节点ID
 	Explain      string // 说明
 	Expression   string // 条件表达式
+}
+
+// PropertyResult 节点属性
+type PropertyResult struct {
+	Name  string // 属性名称
+	Value string // 属性值
 }
 
 // NodeFormResult 节点表单

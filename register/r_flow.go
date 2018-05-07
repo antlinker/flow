@@ -19,4 +19,5 @@ func FlowDBMap(db *db.DB) {
 	db.AddTableWithName(schema.FieldOption{}, schema.FieldOptionTableName)
 	db.AddTableWithName(schema.FieldProperty{}, schema.FieldPropertyTableName)
 	db.AddTableWithName(schema.FieldValidation{}, schema.FieldValidationTableName)
+	db.AddTableWithName(schema.NodeProperty{}, schema.NodePropertyTableName)
 }

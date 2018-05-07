@@ -9,7 +9,7 @@
 
 ```bash
 cd $GOPATH/src
-git clone https://gogs.xiaoyuanjijiehao.com/antlinker/flow.git ant-flow
+git clone https://gogs.xiaoyuanjijiehao.com/antlinker/ant-flow.git
 cd ant-flow
 go install -v ./...
 ```
