@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitee.com/antlinker/flow"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow"
+	"ant-flow/service/db"
 	"github.com/LyricTian/logger"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/teambition/gear"
@@ -27,10 +27,10 @@ func init() {
 func main() {
 	flag.Parse()
 
-	flow.Init(&db.Config{
-		DSN:   dsn,
-		Trace: true,
-	})
+	flow.Init(
+		db.SetDSN(dsn),
+		db.SetTrace(true),
+	)
 
 	serverOptions := []flow.ServerOption{
 		flow.ServerStaticRootOption(staticRoot),

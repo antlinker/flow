@@ -1,11 +1,11 @@
-import fetch from "dva/fetch";
-import { notification } from "antd";
+import fetch from 'dva/fetch';
+import { notification } from 'antd';
 
 function checkStatus(response) {
   if (response.status >= 200 && response.status < 300) {
     return response;
   }
-  return response.json().then(body => {
+  return response.json().then((body) => {
     const { message } = body;
     const error = new Error(message);
     error.response = response;
@@ -14,10 +14,10 @@ function checkStatus(response) {
 }
 
 function baseURL() {
-  let pathname = window.location.pathname;
+  let { pathname } = window.location;
   if (pathname.length > 1) {
-    if (pathname[pathname.length - 1] !== "/") {
-      pathname += "/";
+    if (pathname[pathname.length - 1] !== '/') {
+      pathname += '/';
     }
   }
   return `${pathname}api`;
@@ -34,18 +34,18 @@ export default function request(url, options) {
   const base = baseURL();
 
   const defaultOptions = {
-    credentials: "include"
+    credentials: 'include',
   };
   const newOptions = {
     ...defaultOptions,
-    ...options
+    ...options,
   };
 
-  if (newOptions.method === "POST" || newOptions.method === "PUT") {
+  if (newOptions.method === 'POST' || newOptions.method === 'PUT') {
     newOptions.headers = {
-      Accept: "application/json",
-      "Content-Type": "application/json; charset=utf-8",
-      ...newOptions.headers
+      Accept: 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
+      ...newOptions.headers,
     };
     newOptions.body = JSON.stringify(newOptions.body);
   }
@@ -53,11 +53,11 @@ export default function request(url, options) {
   return fetch(`${base}${url}`, newOptions)
     .then(checkStatus)
     .then(response => response.json())
-    .catch(error => {
-      if ("stack" in error && "message" in error) {
+    .catch((error) => {
+      if ('stack' in error && 'message' in error) {
         notification.error({
           message: `请求错误: ${url}`,
-          description: error.message
+          description: error.message,
         });
       }
       return error;

@@ -3,37 +3,32 @@ package flow_test
 import (
 	"encoding/json"
 	"testing"
-	"time"
 
-	"gitee.com/antlinker/flow"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func init() {
-	flow.Init(&db.Config{
-		DSN:          "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
-		Trace:        false,
-		MaxIdleConns: 100,
-		MaxOpenConns: 100,
-		MaxLifetime:  time.Hour * 2,
-	})
+// func init() {
+// 	flow.Init(
+// 		db.SetDSN("root:123456@tcp(127.0.0.1:3306)/flow_test?charset=utf8"),
+// 		db.SetTrace(false),
+// 	)
 
-	err := flow.LoadFile("test_data/leave.bpmn")
-	if err != nil {
-		panic(err)
-	}
+// 	err := flow.LoadFile("test_data/leave.bpmn")
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	err = flow.LoadFile("test_data/apply_sqltest.bpmn")
-	if err != nil {
-		panic(err)
-	}
+// 	err = flow.LoadFile("test_data/apply_sqltest.bpmn")
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	err = flow.LoadFile("test_data/parallel_test.bpmn")
-	if err != nil {
-		panic(err)
-	}
-}
+// 	err = flow.LoadFile("test_data/parallel_test.bpmn")
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }
 
 func TestLeaveBzrApprovalPass(t *testing.T) {
 	var (
@@ -315,4 +310,112 @@ func TestParallel(t *testing.T) {
 		}
 	}
 
+}
+
+func TestLeaveRepeatedBack(t *testing.T) {
+	var (
+		flowCode = "process_leave_test"
+		launcher = "B001"
+		bzr      = "B002"
+		fdy      = "B003"
+		yld      = "B004"
+	)
+
+	input := map[string]interface{}{
+		"day": 5,
+		"bzr": bzr,
+		"fdy": fdy,
+		"yld": yld,
+	}
+
+	// 开始流程
+	result, err := flow.StartFlow(flowCode, "node_start", launcher, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if result.NextNodes[0].CandidateIDs[0] != bzr {
+		t.Fatalf("无效的下一级流转：%s", result.String())
+	}
+
+	// 查询待办
+	todos, err := flow.QueryTodoFlows(flowCode, bzr)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程（通过）
+	input["action"] = "pass"
+	result, err = flow.HandleFlow(todos[0].RecordID, bzr, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 查询待办
+	todos, err = flow.QueryTodoFlows(flowCode, fdy)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程（通过）
+	input["action"] = "pass"
+	result, err = flow.HandleFlow(todos[0].RecordID, fdy, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 查询待办
+	todos, err = flow.QueryTodoFlows(flowCode, yld)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程（退回）
+	input["action"] = "back"
+	result, err = flow.HandleFlow(todos[0].RecordID, fdy, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 查询待办
+	todos, err = flow.QueryTodoFlows(flowCode, launcher)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程
+	result, err = flow.HandleFlow(todos[0].RecordID, fdy, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 查询待办
+	todos, err = flow.QueryTodoFlows(flowCode, bzr)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程（通过）
+	input["action"] = "pass"
+	result, err = flow.HandleFlow(todos[0].RecordID, bzr, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	// 查询待办
+	todos, err = flow.QueryTodoFlows(flowCode, fdy)
+	if err != nil {
+		t.Fatalf(err.Error())
+	}
+
+	// 处理流程（通过）
+	input["action"] = "back"
+	result, err = flow.HandleFlow(todos[0].RecordID, fdy, input)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+
+	if result.NextNodes[0].CandidateIDs[0] != launcher {
+		t.Fatalf("无效的下一级流转：%s", result.String())
+	}
 }

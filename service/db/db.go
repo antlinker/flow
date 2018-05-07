@@ -15,6 +15,9 @@ import (
 	"gopkg.in/gorp.v2"
 )
 
+// M 定义字典
+type M map[string]interface{}
+
 // 自定义数据库语句打印日志
 type dbLogger struct {
 	logger *log.Logger
@@ -34,47 +37,73 @@ func (l *dbLogger) Printf(format string, v ...interface{}) {
 	l.logger.Printf(format, v...)
 }
 
-// M 定义字典
-type M map[string]interface{}
+type options struct {
+	dsn          string        // 连接串
+	trace        bool          // 追踪调试
+	maxLifetime  time.Duration // 设置连接可以被重新使用的最大时间量
+	maxOpenConns int           // 设置打开连接到数据库的最大数量
+	maxIdleConns int           // 设置空闲连接池中的最大连接数
+}
 
-// DB MySQL数据库
+// Option 配置项
+type Option func(*options)
+
+// SetDSN 设置连接串
+func SetDSN(dsn string) Option {
+	return func(o *options) {
+		o.dsn = dsn
+	}
+}
+
+// SetTrace 设置追踪调试
+func SetTrace(t bool) Option {
+	return func(o *options) {
+		o.trace = t
+	}
+}
+
+// SetMaxLifetime 设置连接可以被重新使用的最大时间量
+func SetMaxLifetime(maxLifetime time.Duration) Option {
+	return func(o *options) {
+		o.maxLifetime = maxLifetime
+	}
+}
+
+// SetMaxOpenConns 设置打开连接到数据库的最大数量
+func SetMaxOpenConns(maxOpenConns int) Option {
+	return func(o *options) {
+		o.maxOpenConns = maxOpenConns
+	}
+}
+
+// SetMaxIdleConns 设置空闲连接池中的最大连接数
+func SetMaxIdleConns(maxIdleConns int) Option {
+	return func(o *options) {
+		o.maxIdleConns = maxIdleConns
+	}
+}
+
+// DB 数据库
 type DB struct {
 	*gorp.DbMap
-	cfg *Config
+	opts *options
 }
 
-// Config 数据库配置参数
-type Config struct {
-	DSN          string        // 连接串
-	Trace        bool          // 打印日志
-	MaxLifetime  time.Duration // 设置连接可以被重新使用的最大时间量
-	MaxOpenConns int           // 设置打开连接到数据库的最大数量
-	MaxIdleConns int           // 设置空闲连接池中的最大连接数
-}
-
-// NewDB 创建MySQL数据库实例
-func NewDB(cfg *Config) (*DB, error) {
-	if cfg == nil {
-		return nil, fmt.Errorf("缺少配置文件")
+// NewMySQL 创建MySQL数据库实例
+func NewMySQL(opts ...Option) (*DB, error) {
+	o := &options{
+		maxLifetime:  time.Hour * 2,
+		maxOpenConns: 150,
+		maxIdleConns: 50,
 	}
 
-	if cfg.MaxIdleConns == 0 {
-		cfg.MaxIdleConns = 50
+	for _, opt := range opts {
+		opt(o)
 	}
 
-	if cfg.MaxOpenConns == 0 {
-		cfg.MaxOpenConns = 150
-	}
+	m := &DB{opts: o}
 
-	if cfg.MaxLifetime == 0 {
-		cfg.MaxLifetime = time.Hour * 2
-	}
-
-	m := &DB{
-		cfg: cfg,
-	}
-
-	db, err := sql.Open("mysql", m.cfg.DSN)
+	db, err := sql.Open("mysql", m.opts.dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -93,13 +122,13 @@ func NewDB(cfg *Config) (*DB, error) {
 		return nil, err
 	}
 
-	db.SetMaxOpenConns(m.cfg.MaxOpenConns)
-	db.SetMaxIdleConns(m.cfg.MaxIdleConns)
-	db.SetConnMaxLifetime(m.cfg.MaxLifetime)
+	db.SetMaxOpenConns(m.opts.maxOpenConns)
+	db.SetMaxIdleConns(m.opts.maxIdleConns)
+	db.SetConnMaxLifetime(m.opts.maxLifetime)
 
 	m.DbMap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{Encoding: "UTF8", Engine: "InnoDB"}}
 
-	if m.cfg.Trace {
+	if m.opts.trace {
 		m.TraceOn("[db]", new(dbLogger).Init())
 	}
 
@@ -343,15 +372,6 @@ func (m *DB) In(query string, args ...interface{}) (string, []interface{}, error
 	}
 
 	return buf.String(), newArgs, nil
-}
-
-// CheckExists 检查数据是否存在
-func (m *DB) CheckExists(query string, args ...interface{}) (bool, error) {
-	n, err := m.SelectInt(query, args...)
-	if err != nil {
-		return false, err
-	}
-	return n > 0, nil
 }
 
 func (m *DB) appendReflectSlice(args []interface{}, v reflect.Value, vlen int) []interface{} {

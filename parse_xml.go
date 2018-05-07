@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"gitee.com/antlinker/flow/util"
+	"ant-flow/util"
 	"github.com/beevik/etree"
 )
 

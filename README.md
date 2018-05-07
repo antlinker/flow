@@ -9,8 +9,8 @@
 
 ```bash
 cd $GOPATH/src
-git clone https://gitee.com/antlinker/flow.git gitee.com/antlinker/flow
-cd gitee.com/antlinker/flow
+git clone https://gogs.xiaoyuanjijiehao.com/antlinker/flow.git ant-flow
+cd ant-flow
 go install -v ./...
 ```
 
@@ -22,19 +22,16 @@ go install -v ./...
 import (
 	"time"
 
-	"gitee.com/antlinker/flow"
-	"gitee.com/antlinker/flow/service/db"
+	"ant-flow"
+	"ant-flow/service/db"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
-	flow.Init(&db.Config{
-		DSN:          "root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8",
-		Trace:        true,
-		MaxIdleConns: 100,
-		MaxOpenConns: 100,
-		MaxLifetime:  time.Hour * 2,
-  })
+	flow.Init(
+		db.SetDSN("root:123456@tcp(127.0.0.1:3306)/flows?charset=utf8"),
+		db.SetTrace(true),
+	)
 }
 
 ```
@@ -111,6 +108,53 @@ func filter(ctx *gear.Context) error {
 	fmt.Printf("请求参数：%s - %s \n", ctx.Path, ctx.Method)
 	return nil
 }
+```
+
+### 8. 查询流程待办数据
+
+```go
+	result,err := flow.QueryTodoFlows("流程编号","流程处理人ID")
+	if err != nil {
+		// 处理错误
+	}
+```
+
+### 9. 查询流程历史数据
+
+```go
+result,err := flow.QueryFlowHistory("待办流程实例ID")
+if err != nil {
+	// 处理错误
+}
+```
+
+### 10. 查询已办理的流程实例ID列表
+
+```go
+ids,err := flow.QueryDoneFlowIDs("流程编号","流程处理人ID")
+if err != nil {
+	// 处理错误
+}
+```
+
+### 11. 查询节点实例的候选人ID列表
+
+```go
+ids,err := flow.QueryNodeCandidates("待办流程节点实例ID")
+if err != nil {
+	// 处理错误
+}
+```
+
+### 12. 停止流程实例
+
+```go
+	err := flow.StopFlowInstance("待办流程节点实例ID", func(flowInstance *schema.FlowInstance) bool {
+		return flowInstance.Launcher == "XXX"
+	})
+	if err != nil {
+		// 处理错误
+	}
 ```
 
 ![流程管理](example/screenshots/QQ20180123-175942@2x.png)

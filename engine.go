@@ -9,10 +9,12 @@ import (
 	"strconv"
 	"time"
 
-	"gitee.com/antlinker/flow/bll"
-	"gitee.com/antlinker/flow/schema"
-	"gitee.com/antlinker/flow/service/db"
-	"gitee.com/antlinker/flow/util"
+	"ant-flow/bll"
+	"ant-flow/register"
+	"ant-flow/schema"
+	"ant-flow/service/db"
+	"ant-flow/util"
+	"github.com/facebookgo/inject"
 	"github.com/pkg/errors"
 )
 
@@ -24,12 +26,34 @@ type Engine struct {
 }
 
 // Init 初始化流程引擎
-func (e *Engine) Init(db *db.DB, parser Parser, execer Execer) *Engine {
-	blls := new(bll.All).Init(db)
-	e.flowBll = blls.Flow
+func (e *Engine) Init(db *db.DB, parser Parser, execer Execer) (*Engine, error) {
+
+	var (
+		g       inject.Graph
+		flowBll bll.Flow
+	)
+
+	err := g.Provide(&inject.Object{Value: db},
+		&inject.Object{Value: &flowBll})
+	if err != nil {
+		return e, err
+	}
+
+	err = g.Populate()
+	if err != nil {
+		return e, err
+	}
+
+	register.FlowDBMap(db)
+	err = db.CreateTablesIfNotExists()
+	if err != nil {
+		return e, err
+	}
+
+	e.flowBll = &flowBll
 	e.parser = parser
 	e.execer = execer
-	return e
+	return e, nil
 }
 
 // SetParser 设定解析器
@@ -241,8 +265,9 @@ func (e *Engine) CreateFlow(data []byte) error {
 
 // HandleResult 处理结果
 type HandleResult struct {
-	IsEnd     bool        // 是否结束
-	NextNodes []*NextNode // 下一处理节点
+	IsEnd        bool                 `json:"is_end"`        // 是否结束
+	NextNodes    []*NextNode          `json:"next_nodes"`    // 下一处理节点
+	FlowInstance *schema.FlowInstance `json:"flow_instance"` // 流程实例
 }
 
 func (r *HandleResult) String() string {
@@ -284,6 +309,7 @@ func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte)
 	if err != nil {
 		return nil, err
 	}
+	result.FlowInstance = nr.GetFlowInstance()
 
 	return &result, nil
 }
@@ -309,6 +335,12 @@ func (e *Engine) StartFlow(flowCode, nodeCode, userID string, inputData []byte) 
 // userID 处理人
 // inputData 输入数据
 func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+	nodeInstance, err := e.flowBll.GetNodeInstance(nodeInstanceID)
+	if err != nil {
+		return nil, err
+	} else if nodeInstance.Status != 1 {
+		return nil, nil
+	}
 	return e.nextFlowHandle(nodeInstanceID, userID, inputData)
 }
 
@@ -328,9 +360,55 @@ func (e *Engine) StopFlow(nodeInstanceID string, allowStop func(*schema.FlowInst
 	return e.flowBll.StopFlowInstance(flowInstance.RecordID)
 }
 
+// StopFlowInstance 停止流程实例
+func (e *Engine) StopFlowInstance(flowInstanceID string, allowStop func(*schema.FlowInstance) bool) error {
+	flowInstance, err := e.flowBll.GetFlowInstance(flowInstanceID)
+	if err != nil {
+		return err
+	}
+
+	if allowStop != nil && !allowStop(flowInstance) {
+		return errors.New("不允许停止流程")
+	}
+
+	return e.flowBll.StopFlowInstance(flowInstanceID)
+}
+
 // QueryTodoFlows 查询流程待办数据
 // flowCode 流程编号
 // userID 待办人
 func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
 	return e.flowBll.QueryTodo(flowCode, userID)
+}
+
+// QueryFlowHistory 查询流程历史数据
+// flowInstanceID 流程实例内码
+func (e *Engine) QueryFlowHistory(flowInstanceID string) ([]*schema.FlowHistoryResult, error) {
+	return e.flowBll.QueryHistory(flowInstanceID)
+}
+
+// QueryDoneFlowIDs 查询已办理的流程实例ID列表
+func (e *Engine) QueryDoneFlowIDs(flowCode, userID string) ([]string, error) {
+	return e.flowBll.QueryDoneIDs(flowCode, userID)
+}
+
+// QueryNodeCandidates 查询节点实例的候选人ID列表
+func (e *Engine) QueryNodeCandidates(nodeInstanceID string) ([]string, error) {
+	candidates, err := e.flowBll.QueryNodeCandidates(nodeInstanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	ids := make([]string, len(candidates))
+
+	for i, c := range candidates {
+		ids[i] = c.CandidateID
+	}
+
+	return ids, nil
+}
+
+// GetNodeInstance 获取节点实例
+func (e *Engine) GetNodeInstance(nodeInstanceID string) (*schema.NodeInstance, error) {
+	return e.flowBll.GetNodeInstance(nodeInstanceID)
 }

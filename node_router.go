@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"gitee.com/antlinker/flow/schema"
+	"ant-flow/schema"
 	"github.com/pkg/errors"
 )
 
@@ -117,6 +117,11 @@ func (n *NodeRouter) next(nodeInstanceID, processor string) (*NodeRouter, error)
 		return nil, err
 	}
 	return nextRouter, nil
+}
+
+// GetFlowInstance 获取流程实例
+func (n *NodeRouter) GetFlowInstance() *schema.FlowInstance {
+	return n.flowInstance
 }
 
 // Next 流向下一节点
