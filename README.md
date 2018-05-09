@@ -19,8 +19,8 @@ go get github.com/antlinker/flow
 import (
 	"time"
 
-	"github.com/antlinker/flow"
-	"github.com/antlinker/flow/service/db"
+	"ant-flow"
+	"ant-flow/service/db"
 	_ "github.com/go-sql-driver/mysql"
 )
 
