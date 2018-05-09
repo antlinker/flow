@@ -3,13 +3,15 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net/http"
 
-	"ant-flow"
-	"ant-flow/service/db"
-	"github.com/LyricTian/logger"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/antlinker/flow"
+	"github.com/antlinker/flow/service/db"
+
 	"github.com/teambition/gear"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var (
@@ -40,8 +42,8 @@ func main() {
 
 	http.Handle("/flow/", flow.StartServer(serverOptions...))
 
-	logger.Infof("服务运行在[%s]端口...", addr)
-	logger.Fatalf("%v", http.ListenAndServe(addr, nil))
+	log.Printf("服务运行在[%s]端口...", addr)
+	log.Fatalf("%v", http.ListenAndServe(addr, nil))
 }
 
 func filter(ctx *gear.Context) error {

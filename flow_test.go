@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"ant-flow"
+	"github.com/antlinker/flow"
 	_ "github.com/go-sql-driver/mysql"
 )
 

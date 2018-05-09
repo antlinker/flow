@@ -5,7 +5,7 @@
 ``` go
 
     import (
-        "ant-flow/expression"
+        "github.com/antlinker/flow/expression"
     )
     // db 为已经初始化后的数据库连接
     sql.Reg(db)

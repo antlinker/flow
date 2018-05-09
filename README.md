@@ -8,10 +8,7 @@
 ## 获取项目
 
 ```bash
-cd $GOPATH/src
-git clone https://gogs.xiaoyuanjijiehao.com/antlinker/ant-flow.git
-cd ant-flow
-go install -v ./...
+go get github.com/antlinker/flow
 ```
 
 ## 使用
@@ -22,8 +19,8 @@ go install -v ./...
 import (
 	"time"
 
-	"ant-flow"
-	"ant-flow/service/db"
+	"github.com/antlinker/flow"
+	"github.com/antlinker/flow/service/db"
 	_ "github.com/go-sql-driver/mysql"
 )
 
