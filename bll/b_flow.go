@@ -3,9 +3,9 @@ package bll
 import (
 	"time"
 
-	"ant-flow/model"
-	"ant-flow/schema"
-	"ant-flow/util"
+	"github.com/antlinker/flow/model"
+	"github.com/antlinker/flow/schema"
+	"github.com/antlinker/flow/util"
 )
 
 // Flow 流程管理

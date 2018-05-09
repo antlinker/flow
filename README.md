@@ -8,10 +8,7 @@
 ## 获取项目
 
 ```bash
-cd $GOPATH/src
-git clone https://gogs.xiaoyuanjijiehao.com/antlinker/flow.git ant-flow
-cd ant-flow
-go install -v ./...
+go get github.com/antlinker/flow
 ```
 
 ## 使用

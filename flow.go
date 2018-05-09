@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"ant-flow/expression/sql"
-	"ant-flow/schema"
-	"ant-flow/service/db"
+	"github.com/antlinker/flow/expression/sql"
+	"github.com/antlinker/flow/schema"
+	"github.com/antlinker/flow/service/db"
 )
 
 var (

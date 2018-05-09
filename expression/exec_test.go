@@ -6,11 +6,11 @@ import (
 	"reflect"
 	"testing"
 
-	"ant-flow/expression"
+	"github.com/antlinker/flow/expression"
 )
 
 func TestMain(m *testing.M) {
-	expression.Import("test", map[string]interface{}{
+	expression.GlobalImport("test", map[string]interface{}{
 		"testAdd": func(a, b int) int {
 			return a + b
 		},

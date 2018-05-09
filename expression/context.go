@@ -2,15 +2,58 @@ package expression
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"qlang.io/cl/qlang"
 	//"qlang.io/cl/qlang"
 )
 
+var (
+	dbkey struct{}
+)
+
+// CreateExpContextByDB 创建含有DB的ctx
+func CreateExpContextByDB(ctx context.Context, db *sql.DB) ExpContext {
+	if ctx == nil {
+		panic("ctx不能为nil")
+	}
+	ectx, ok := ctx.(*expContext)
+	if ok {
+
+		ectx.ctx = context.WithValue(ectx.ctx, dbkey, db)
+		return ectx
+	}
+
+	return &expContext{
+		ctx:        context.WithValue(ctx, dbkey, db),
+		ql:         qlang.New(),
+		predefined: predefined{data: make([]pairs, 0, 4)},
+	}
+}
+
+// FromExpContextForDB 从ctx中获取*sql.DB
+func FromExpContextForDB(ctx context.Context) *sql.DB {
+	db := ctx.Value(dbkey)
+	if db == nil {
+		return nil
+	}
+	dbs, ok := db.(*sql.DB)
+	if ok {
+		return dbs
+	}
+	return nil
+}
+
+// CreateExpContext 创建一个ExpContext
+// 实现了context.Context接口
 func CreateExpContext(ctx context.Context) ExpContext {
 	if ctx == nil {
 		panic("ctx不能为nil")
+	}
+	ectx, ok := ctx.(*expContext)
+	if ok {
+		return ectx
 	}
 	return &expContext{
 		ctx:        ctx,
