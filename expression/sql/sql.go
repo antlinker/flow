@@ -6,45 +6,74 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/antlinker/flow/expression"
+
 	"qlang.io/cl/qlang"
 )
 
+// execDB 从ctx获取数据库
+// 没有数据库发出panic
+func execDB(ctx context.Context) *sql.DB {
+	db := expression.FromExpContextForDB(ctx)
+	if db == nil {
+		panic(fmt.Errorf("没有指定数据库不能查询"))
+	}
+	return db
+}
+
+// getDB 获取指定数据库
+// 如果ctx没有指定数据库返回defaultDB
+// 如果defaultDB为nil则发出panic
+func getDB(ctx context.Context, defaultDB *sql.DB) *sql.DB {
+	db := expression.FromExpContextForDB(ctx)
+	if db == nil {
+		db = defaultDB
+	}
+	if db == nil {
+		panic(fmt.Errorf("没有指定数据库不能查询"))
+	}
+	return db
+}
+
 // Reg 注册数据库DB
+// 有默认数据库操作
+// 也支持多数据库
 func Reg(defaultDB *sql.DB) {
 	qlang.Import("sqlctx", map[string]interface{}{
 		"QueryDB": QueryDB,
 		"Query": func(ctx context.Context, query string, args ...interface{}) []map[string]interface{} {
-			return QueryDB(ctx, defaultDB, query, args...)
+
+			return QueryDB(ctx, getDB(ctx, defaultDB), query, args...)
 		},
 		"CountDB": QueryDBCount,
 		"Count": func(ctx context.Context, query string, args ...interface{}) int {
-			return QueryDBCount(ctx, defaultDB, query, args...)
+			return QueryDBCount(ctx, getDB(ctx, defaultDB), query, args...)
 		},
 		"OneDB": QueryOneDB,
 		"One": func(query string, ctx context.Context, args ...interface{}) map[string]interface{} {
-			return QueryOneDB(ctx, defaultDB, query, args...)
+			return QueryOneDB(ctx, getDB(ctx, defaultDB), query, args...)
 		},
 	})
-	// qlang.Import("sql", map[string]interface{}{
-	// 	"QueryDB": func(db *sql.DB, query string, args ...interface{}) []map[string]interface{} {
-	// 		return QueryDB(db, context.Background(), query, args...)
-	// 	},
-	// 	"Query": func(query string, args ...interface{}) []map[string]interface{} {
-	// 		return QueryDB(defaultDB, context.Background(), query, args...)
-	// 	},
-	// 	"CountDB": func(db *sql.DB, query string, args ...interface{}) int {
-	// 		return QueryDBCount(db, context.Background(), query, args...)
-	// 	},
-	// 	"Count": func(query string, args ...interface{}) int {
-	// 		return QueryDBCount(defaultDB, context.Background(), query, args...)
-	// 	},
-	// 	"OneDB": func(db *sql.DB, query string, args ...interface{}) map[string]interface{} {
-	// 		return QueryOneDB(db, context.Background(), query, args...)
-	// 	},
-	// 	"One": func(query string, args ...interface{}) map[string]interface{} {
-	// 		return QueryOneDB(defaultDB, context.Background(), query, args...)
-	// 	},
-	// })
+
+}
+
+// RegMoreDB 注册多数据库支持
+// 没有默认数据库
+func RegMoreDB() {
+	qlang.Import("sqlctx", map[string]interface{}{
+		"QueryDB": QueryDB,
+		"Query": func(ctx context.Context, query string, args ...interface{}) []map[string]interface{} {
+			return QueryDB(ctx, execDB(ctx), query, args...)
+		},
+		"CountDB": QueryDBCount,
+		"Count": func(ctx context.Context, query string, args ...interface{}) int {
+			return QueryDBCount(ctx, execDB(ctx), query, args...)
+		},
+		"OneDB": QueryOneDB,
+		"One": func(query string, ctx context.Context, args ...interface{}) map[string]interface{} {
+			return QueryOneDB(ctx, execDB(ctx), query, args...)
+		},
+	})
 
 }
 
