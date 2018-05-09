@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"ant-flow/schema"
+	"github.com/antlinker/flow/schema"
 	"github.com/teambition/gear"
 )
 

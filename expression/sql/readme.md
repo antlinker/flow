@@ -3,8 +3,8 @@
 ``` go
 
 import (
-    "ant-flow/expression"
-    "ant-flow/expression/sql"
+    "github.com/antlinker/flow/expression"
+    "github.com/antlinker/flow/expression/sql"
 )
 // db 为已经初始化后的数据库连接
 sql.Reg(db)

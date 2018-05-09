@@ -1,6 +1,6 @@
 package expression
 
 import (
-	_ "ant-flow/expression/builtin"
+	_ "github.com/antlinker/flow/expression/builtin"
 	_ "qlang.io/lib/builtin"
 )

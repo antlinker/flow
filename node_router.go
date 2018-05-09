@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"ant-flow/schema"
+	"github.com/antlinker/flow/schema"
 	"github.com/pkg/errors"
 )
 

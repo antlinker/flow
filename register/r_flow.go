@@ -1,8 +1,8 @@
 package register
 
 import (
-	"ant-flow/schema"
-	"ant-flow/service/db"
+	"github.com/antlinker/flow/schema"
+	"github.com/antlinker/flow/service/db"
 )
 
 // FlowDBMap 注册流程相关的数据库映射
@@ -19,4 +19,5 @@ func FlowDBMap(db *db.DB) {
 	db.AddTableWithName(schema.FieldOption{}, schema.FieldOptionTableName)
 	db.AddTableWithName(schema.FieldProperty{}, schema.FieldPropertyTableName)
 	db.AddTableWithName(schema.FieldValidation{}, schema.FieldValidationTableName)
+	db.AddTableWithName(schema.NodeProperty{}, schema.NodePropertyTableName)
 }
