@@ -5,30 +5,31 @@ import (
 	"testing"
 
 	"github.com/antlinker/flow"
+	"github.com/antlinker/flow/service/db"
 	_ "github.com/go-sql-driver/mysql"
 )
 
-// func init() {
-// 	flow.Init(
-// 		db.SetDSN("root:123456@tcp(127.0.0.1:3306)/flow_test?charset=utf8"),
-// 		db.SetTrace(false),
-// 	)
+func init() {
+	flow.Init(
+		db.SetDSN("root:123456@tcp(127.0.0.1:3306)/flow_test?charset=utf8"),
+		db.SetTrace(false),
+	)
 
-// 	err := flow.LoadFile("test_data/leave.bpmn")
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	err := flow.LoadFile("test_data/leave.bpmn")
+	if err != nil {
+		panic(err)
+	}
 
-// 	err = flow.LoadFile("test_data/apply_sqltest.bpmn")
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	err = flow.LoadFile("test_data/apply_sqltest.bpmn")
+	if err != nil {
+		panic(err)
+	}
 
-// 	err = flow.LoadFile("test_data/parallel_test.bpmn")
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
+	err = flow.LoadFile("test_data/parallel_test.bpmn")
+	if err != nil {
+		panic(err)
+	}
+}
 
 func TestLeaveBzrApprovalPass(t *testing.T) {
 	var (

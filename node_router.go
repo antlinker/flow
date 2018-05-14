@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/antlinker/flow/expression"
+
 	"github.com/antlinker/flow/schema"
 	"github.com/pkg/errors"
 )
@@ -225,6 +227,9 @@ func (n *NodeRouter) Next(processor string) error {
 	}
 
 	return nil
+}
+func (n *NodeRouter) creCtx() context.Context {
+	return expression.CreateExpContextByDB(context.Background(), nil)
 }
 
 // 增加下一处理节点实例
