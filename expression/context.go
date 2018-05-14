@@ -9,9 +9,7 @@ import (
 	//"qlang.io/cl/qlang"
 )
 
-var (
-	dbkey struct{}
-)
+type dbkey struct{}
 
 // CreateExpContextByDB 创建含有DB的ctx
 func CreateExpContextByDB(ctx context.Context, db *sql.DB) ExpContext {
@@ -21,12 +19,12 @@ func CreateExpContextByDB(ctx context.Context, db *sql.DB) ExpContext {
 	ectx, ok := ctx.(*expContext)
 	if ok {
 
-		ectx.ctx = context.WithValue(ectx.ctx, dbkey, db)
+		ectx.ctx = context.WithValue(ectx.ctx, dbkey{}, db)
 		return ectx
 	}
 
 	return &expContext{
-		ctx:        context.WithValue(ctx, dbkey, db),
+		ctx:        context.WithValue(ctx, dbkey{}, db),
 		ql:         qlang.New(),
 		predefined: predefined{data: make([]pairs, 0, 4)},
 	}
@@ -34,7 +32,7 @@ func CreateExpContextByDB(ctx context.Context, db *sql.DB) ExpContext {
 
 // FromExpContextForDB 从ctx中获取*sql.DB
 func FromExpContextForDB(ctx context.Context) *sql.DB {
-	db := ctx.Value(dbkey)
+	db := ctx.Value(dbkey{})
 	if db == nil {
 		return nil
 	}
