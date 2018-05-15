@@ -49,7 +49,7 @@ func (a *API) QueryFlowPage(ctx *gear.Context) error {
 		Name: ctx.Query("name"),
 	}
 
-	total, items, err := a.engine.flowBll.QueryFlowPage(params, pageIndex, pageSize)
+	total, items, err := a.engine.flowBll.QueryAllFlowPage(params, pageIndex, pageSize)
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}

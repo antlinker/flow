@@ -86,11 +86,10 @@ func SetMaxIdleConns(maxIdleConns int) Option {
 // DB 数据库
 type DB struct {
 	*gorp.DbMap
-	opts *options
 }
 
 // NewMySQL 创建MySQL数据库实例
-func NewMySQL(opts ...Option) (*DB, error) {
+func NewMySQL(opts ...Option) (*sql.DB, bool, error) {
 	o := &options{
 		maxLifetime:  time.Hour * 2,
 		maxOpenConns: 150,
@@ -101,11 +100,9 @@ func NewMySQL(opts ...Option) (*DB, error) {
 		opt(o)
 	}
 
-	m := &DB{opts: o}
-
-	db, err := sql.Open("mysql", m.opts.dsn)
+	db, err := sql.Open("mysql", o.dsn)
 	if err != nil {
-		return nil, err
+		return nil, o.trace, err
 	}
 
 	// 尝试发送Ping包
@@ -119,20 +116,24 @@ func NewMySQL(opts ...Option) (*DB, error) {
 		return time.Second
 	})
 	if err != nil {
-		return nil, err
+		return nil, o.trace, err
 	}
 
-	db.SetMaxOpenConns(m.opts.maxOpenConns)
-	db.SetMaxIdleConns(m.opts.maxIdleConns)
-	db.SetConnMaxLifetime(m.opts.maxLifetime)
+	db.SetMaxOpenConns(o.maxOpenConns)
+	db.SetMaxIdleConns(o.maxIdleConns)
+	db.SetConnMaxLifetime(o.maxLifetime)
 
-	m.DbMap = &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{Encoding: "UTF8", Engine: "InnoDB"}}
+	return db, o.trace, nil
+}
 
-	if m.opts.trace {
-		m.TraceOn("[db]", new(dbLogger).Init())
+// NewMySQLWithDB 创建DB
+func NewMySQLWithDB(db *sql.DB, trace bool) *DB {
+	dbMap := &gorp.DbMap{Db: db, Dialect: gorp.MySQLDialect{Encoding: "UTF8", Engine: "InnoDB"}}
+	if trace {
+		dbMap.TraceOn("[db]", new(dbLogger).Init())
 	}
 
-	return m, nil
+	return &DB{dbMap}
 }
 
 // Close 关闭数据库连接

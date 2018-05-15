@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -27,13 +28,14 @@ type Engine struct {
 }
 
 // Init 初始化流程引擎
-func (e *Engine) Init(db *db.DB, parser Parser, execer Execer) (*Engine, error) {
+func (e *Engine) Init(parser Parser, execer Execer, sqlDB *sql.DB, trace bool) (*Engine, error) {
 
 	var (
 		g       inject.Graph
 		flowBll bll.Flow
 	)
 
+	db := db.NewMySQLWithDB(sqlDB, trace)
 	err := g.Provide(&inject.Object{Value: db},
 		&inject.Object{Value: &flowBll})
 	if err != nil {

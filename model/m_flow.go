@@ -329,10 +329,10 @@ func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, err
 	return items, nil
 }
 
-// QueryFlowPage 查询流程分页数据
-func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
+// QueryAllFlowPage 查询流程分页数据
+func (a *Flow) QueryAllFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
 	var (
-		where = "WHERE deleted=0"
+		where = "WHERE deleted=0 AND flag=1"
 		args  []interface{}
 	)
 
@@ -344,6 +344,16 @@ func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize u
 	if name := params.Name; name != "" {
 		where = fmt.Sprintf("%s AND name LIKE ?", where)
 		args = append(args, "%"+name+"%")
+	}
+
+	if v := params.TypeCode; v != "" {
+		where = fmt.Sprintf("%s AND type_code=?", where)
+		args = append(args, v)
+	}
+
+	if v := params.Status; v > 0 {
+		where = fmt.Sprintf("%s AND status=?", where)
+		args = append(args, v)
 	}
 
 	n, err := a.DB.SelectInt(fmt.Sprintf("SELECT count(*) FROM %s %s", schema.FlowTableName, where), args...)
@@ -434,4 +444,79 @@ func (a *Flow) QueryDoneIDs(flowCode, userID string) ([]string, error) {
 	}
 
 	return ids, nil
+}
+
+// QueryGroupFlowPage 查询流程分组分页数据
+func (a *Flow) QueryGroupFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
+	var (
+		where = "WHERE deleted=0 AND flag=1"
+		args  []interface{}
+	)
+
+	if code := params.Code; code != "" {
+		where = fmt.Sprintf("%s AND code LIKE ?", where)
+		args = append(args, "%"+code+"%")
+	}
+
+	if name := params.Name; name != "" {
+		where = fmt.Sprintf("%s AND name LIKE ?", where)
+		args = append(args, "%"+name+"%")
+	}
+
+	if v := params.TypeCode; v != "" {
+		where = fmt.Sprintf("%s AND type_code=?", where)
+		args = append(args, v)
+	}
+
+	if v := params.Status; v > 0 {
+		where = fmt.Sprintf("%s AND status=?", where)
+		args = append(args, v)
+	}
+
+	query := fmt.Sprintf("SELECT code,MAX(version)'version' FROM %s %s GROUP BY code ORDER BY code", schema.FlowTableName, where)
+
+	var items []*schema.Flow
+	_, err := a.DB.Select(&items, query, args...)
+	if err != nil {
+		return 0, nil, errors.Wrapf(err, "查询分页数据发生错误")
+	} else if len(items) == 0 {
+		return 0, nil, nil
+	}
+
+	start := int((pageIndex - 1) * pageSize)
+	end := int(start + int(pageSize))
+
+	var data []*schema.Flow
+	if l := len(items); l > start {
+		if l > end {
+			data = items[start:end]
+		} else {
+			data = items[start:]
+		}
+	}
+
+	result := make([]*schema.FlowQueryResult, len(data))
+	for i, item := range data {
+		flowResult, err := a.GetFlowQueryResultByCodeAndVersion(item.Code, item.Version)
+		if err != nil {
+			return 0, nil, err
+		}
+		result[i] = flowResult
+	}
+
+	return int64(len(items)), result, err
+}
+
+// GetFlowQueryResultByCodeAndVersion 根据编号和版本获取流程结果
+func (a *Flow) GetFlowQueryResultByCodeAndVersion(code string, version int64) (*schema.FlowQueryResult, error) {
+	query := fmt.Sprintf("SELECT id,record_id,created,code,name,version,type_code,status,memo FROM %s", schema.FlowTableName)
+	query = fmt.Sprintf("%s WHERE deleted=0 AND flag=1 AND code=? AND version=?", query)
+
+	var item schema.FlowQueryResult
+	err := a.DB.SelectOne(&item, query, code, version)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询流程结果发生错误")
+	}
+
+	return &item, nil
 }

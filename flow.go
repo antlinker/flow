@@ -16,16 +16,17 @@ var (
 
 // Init 初始化流程配置
 func Init(opts ...db.Option) {
-	db, err := db.NewMySQL(opts...)
+	db, trace, err := db.NewMySQL(opts...)
 	if err != nil {
 		panic(err)
 	}
-	e, err := new(Engine).Init(db, NewXMLParser(), NewQLangExecer())
+
+	e, err := new(Engine).Init(NewXMLParser(), NewQLangExecer(), db, trace)
 	if err != nil {
 		panic(err)
 	}
 	engine = e
-	sql.Reg(db.Db)
+	sql.Reg(db)
 }
 
 // SetParser 设定解析器

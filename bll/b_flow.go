@@ -182,9 +182,9 @@ func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, err
 	return a.FlowModel.QueryTodo(flowCode, userID)
 }
 
-// QueryFlowPage 查询流程分页数据
-func (a *Flow) QueryFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
-	return a.FlowModel.QueryFlowPage(params, pageIndex, pageSize)
+// QueryAllFlowPage 查询流程分页数据
+func (a *Flow) QueryAllFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
+	return a.FlowModel.QueryAllFlowPage(params, pageIndex, pageSize)
 }
 
 // DeleteFlow 删除流程
@@ -200,4 +200,9 @@ func (a *Flow) QueryHistory(flowInstanceID string) ([]*schema.FlowHistoryResult,
 // QueryDoneIDs 查询已办理的流程实例ID列表
 func (a *Flow) QueryDoneIDs(flowCode, userID string) ([]string, error) {
 	return a.FlowModel.QueryDoneIDs(flowCode, userID)
+}
+
+// QueryGroupFlowPage 查询流程分组分页数据
+func (a *Flow) QueryGroupFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
+	return a.FlowModel.QueryGroupFlowPage(params, pageIndex, pageSize)
 }
