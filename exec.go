@@ -30,6 +30,11 @@ func (*execer) ExecReturnBool(ctx context.Context, exp, params []byte) (bool, er
 	if err != nil {
 		return false, err
 	}
+
+	expCtx, ok := FromExpContext(ctx)
+	if ok {
+		return expression.ExecParamBool(expCtx, string(exp), m)
+	}
 	return expression.ExecParamBool(ctx, string(exp), m)
 }
 
@@ -38,6 +43,11 @@ func (*execer) ExecReturnStringSlice(ctx context.Context, exp, params []byte) ([
 	err := json.Unmarshal(params, &m)
 	if err != nil {
 		return nil, err
+	}
+
+	expCtx, ok := FromExpContext(ctx)
+	if ok {
+		return expression.ExecParamSliceStr(expCtx, string(exp), m)
 	}
 	return expression.ExecParamSliceStr(ctx, string(exp), m)
 }

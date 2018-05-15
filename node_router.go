@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/antlinker/flow/expression"
-
 	"github.com/antlinker/flow/schema"
 	"github.com/pkg/errors"
 )
@@ -21,10 +19,6 @@ type (
 	// EndHandle 定义流程结束处理函数
 	EndHandle func(*schema.FlowInstance)
 )
-
-var defaultNodeRouterOptions = &nodeRouterOptions{
-	autoStart: true,
-}
 
 type nodeRouterOptions struct {
 	autoStart  bool
@@ -58,6 +52,7 @@ func OnFlowEndOption(fn EndHandle) NodeRouterOption {
 
 // NodeRouter 节点路由
 type NodeRouter struct {
+	ctx          context.Context
 	node         *schema.Node
 	flowInstance *schema.FlowInstance
 	nodeInstance *schema.NodeInstance
@@ -69,12 +64,18 @@ type NodeRouter struct {
 }
 
 // Init 初始化节点路由
-func (n *NodeRouter) Init(engine *Engine, nodeInstanceID string, inputData []byte, options ...NodeRouterOption) (*NodeRouter, error) {
-	opts := defaultNodeRouterOptions
+func (n *NodeRouter) Init(ctx context.Context, engine *Engine, nodeInstanceID string, inputData []byte, options ...NodeRouterOption) (*NodeRouter, error) {
+	opts := &nodeRouterOptions{
+		autoStart: true,
+	}
 	for _, opt := range options {
 		opt(opts)
 	}
 
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	n.ctx = ctx
 	n.opts = opts
 	n.inputData = inputData
 	n.engine = engine
@@ -107,7 +108,7 @@ func (n *NodeRouter) Init(engine *Engine, nodeInstanceID string, inputData []byt
 }
 
 func (n *NodeRouter) next(nodeInstanceID, processor string) (*NodeRouter, error) {
-	nextRouter, err := new(NodeRouter).Init(n.engine, nodeInstanceID, n.inputData)
+	nextRouter, err := new(NodeRouter).Init(n.ctx, n.engine, nodeInstanceID, n.inputData)
 	if err != nil {
 		return nil, err
 	}
@@ -228,9 +229,6 @@ func (n *NodeRouter) Next(processor string) error {
 
 	return nil
 }
-func (n *NodeRouter) creCtx() context.Context {
-	return expression.CreateExpContextByDB(context.Background(), nil)
-}
 
 // 增加下一处理节点实例
 func (n *NodeRouter) addNextNodeInstances() ([]string, error) {
@@ -244,7 +242,7 @@ func (n *NodeRouter) addNextNodeInstances() ([]string, error) {
 	var nodeInstanceIDs []string
 	for _, r := range routers {
 		if r.Expression != "" {
-			allow, err := n.engine.execer.ExecReturnBool(context.Background(), []byte(r.Expression), n.getExpData())
+			allow, err := n.engine.execer.ExecReturnBool(n.ctx, []byte(r.Expression), n.getExpData())
 			if err != nil {
 				return nil, err
 			} else if !allow {
@@ -260,7 +258,7 @@ func (n *NodeRouter) addNextNodeInstances() ([]string, error) {
 
 		var candidates []string
 		for _, assign := range assigns {
-			ss, err := n.engine.execer.ExecReturnStringSlice(context.Background(), []byte(assign.Expression), n.getExpData())
+			ss, err := n.engine.execer.ExecReturnStringSlice(n.ctx, []byte(assign.Expression), n.getExpData())
 			if err != nil {
 				return nil, err
 			}
@@ -287,7 +285,7 @@ func (n *NodeRouter) checkNextNodeType(t NodeType) (bool, error) {
 
 	for _, r := range routers {
 		if r.Expression != "" {
-			allow, err := n.engine.execer.ExecReturnBool(context.Background(), []byte(r.Expression), n.getExpData())
+			allow, err := n.engine.execer.ExecReturnBool(n.ctx, []byte(r.Expression), n.getExpData())
 			if err != nil {
 				return false, err
 			} else if !allow {

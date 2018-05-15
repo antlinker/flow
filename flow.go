@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
@@ -48,11 +49,20 @@ func LoadFile(name string) error {
 // userID 发起人
 // input 输入数据
 func StartFlow(flowCode, nodeCode, userID string, input interface{}) (*HandleResult, error) {
+	return StartFlowWithContext(context.Background(), flowCode, nodeCode, userID, input)
+}
+
+// StartFlowWithContext 启动流程
+// flowCode 流程编号
+// nodeCode 开始节点编号
+// userID 发起人
+// input 输入数据
+func StartFlowWithContext(ctx context.Context, flowCode, nodeCode, userID string, input interface{}) (*HandleResult, error) {
 	inputData, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
 	}
-	return engine.StartFlow(flowCode, nodeCode, userID, inputData)
+	return engine.StartFlow(ctx, flowCode, nodeCode, userID, inputData)
 }
 
 // HandleFlow 处理流程节点
@@ -60,11 +70,19 @@ func StartFlow(flowCode, nodeCode, userID string, input interface{}) (*HandleRes
 // userID 处理人
 // input 输入数据
 func HandleFlow(nodeInstanceID, userID string, input interface{}) (*HandleResult, error) {
+	return HandleFlowWithContext(context.Background(), nodeInstanceID, userID, input)
+}
+
+// HandleFlowWithContext 处理流程节点
+// nodeInstanceID 节点实例内码
+// userID 处理人
+// input 输入数据
+func HandleFlowWithContext(ctx context.Context, nodeInstanceID, userID string, input interface{}) (*HandleResult, error) {
 	inputData, err := json.Marshal(input)
 	if err != nil {
 		return nil, err
 	}
-	return engine.HandleFlow(nodeInstanceID, userID, inputData)
+	return engine.HandleFlow(ctx, nodeInstanceID, userID, inputData)
 }
 
 // StopFlow 停止流程
@@ -109,4 +127,9 @@ func GetNodeInstance(nodeInstanceID string) (*schema.NodeInstance, error) {
 func StartServer(opts ...ServerOption) http.Handler {
 	srv := new(Server).Init(engine, opts...)
 	return srv
+}
+
+// DefaultEngine 默认引擎
+func DefaultEngine() *Engine {
+	return engine
 }

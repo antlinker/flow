@@ -67,6 +67,11 @@ func (e *Engine) SetExecer(execer Execer) {
 	e.execer = execer
 }
 
+// FlowBll 流程业务
+func (e *Engine) FlowBll() *bll.Flow {
+	return e.flowBll
+}
+
 func (e *Engine) parseFile(name string) ([]byte, error) {
 	fullName, err := filepath.Abs(name)
 	if err != nil {
@@ -298,7 +303,7 @@ type NextNode struct {
 	CandidateIDs []string     // 节点候选人
 }
 
-func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+func (e *Engine) nextFlowHandle(ctx context.Context, nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
 	var result HandleResult
 
 	var onNextNode = OnNextNodeOption(func(node *schema.Node, nodeInstance *schema.NodeInstance, nodeCandidates []*schema.NodeCandidate) {
@@ -317,7 +322,7 @@ func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte)
 		result.IsEnd = true
 	})
 
-	nr, err := new(NodeRouter).Init(e, nodeInstanceID, inputData, onNextNode, onFlowEnd)
+	nr, err := new(NodeRouter).Init(ctx, e, nodeInstanceID, inputData, onNextNode, onFlowEnd)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +341,7 @@ func (e *Engine) nextFlowHandle(nodeInstanceID, userID string, inputData []byte)
 // nodeCode 开始节点编号
 // userID 发起人
 // inputData 输入数据
-func (e *Engine) StartFlow(flowCode, nodeCode, userID string, inputData []byte) (*HandleResult, error) {
+func (e *Engine) StartFlow(ctx context.Context, flowCode, nodeCode, userID string, inputData []byte) (*HandleResult, error) {
 	nodeInstance, err := e.flowBll.LaunchFlowInstance(flowCode, nodeCode, userID, inputData)
 	if err != nil {
 		return nil, err
@@ -344,21 +349,21 @@ func (e *Engine) StartFlow(flowCode, nodeCode, userID string, inputData []byte) 
 		return nil, errors.New("未找到流程信息")
 	}
 
-	return e.nextFlowHandle(nodeInstance.RecordID, userID, inputData)
+	return e.nextFlowHandle(ctx, nodeInstance.RecordID, userID, inputData)
 }
 
 // HandleFlow 处理流程节点
 // nodeInstanceID 节点实例内码
 // userID 处理人
 // inputData 输入数据
-func (e *Engine) HandleFlow(nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+func (e *Engine) HandleFlow(ctx context.Context, nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
 	nodeInstance, err := e.flowBll.GetNodeInstance(nodeInstanceID)
 	if err != nil {
 		return nil, err
 	} else if nodeInstance.Status != 1 {
 		return nil, nil
 	}
-	return e.nextFlowHandle(nodeInstanceID, userID, inputData)
+	return e.nextFlowHandle(ctx, nodeInstanceID, userID, inputData)
 }
 
 // StopFlow 停止流程
