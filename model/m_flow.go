@@ -403,10 +403,22 @@ func (a *Flow) DeleteFlow(flowID string) error {
 		return errors.Wrapf(err, "删除流程节点指派发生错误")
 	}
 
+	_, err = tran.Exec(fmt.Sprintf("UPDATE %s SET deleted=? WHERE deleted=0 AND node_id IN(SELECT record_id FROM %s WHERE deleted=0 AND flow_id=?)", schema.NodePropertyTableName, schema.NodeTableName), ctimeUnix, flowID)
+	if err != nil {
+		_ = tran.Rollback()
+		return errors.Wrapf(err, "删除流程节点属性发生错误")
+	}
+
 	_, err = tran.Exec(fmt.Sprintf("UPDATE %s SET deleted=? WHERE deleted=0 AND flow_id=?", schema.NodeTableName), ctimeUnix, flowID)
 	if err != nil {
 		_ = tran.Rollback()
 		return errors.Wrapf(err, "删除流程节点发生错误")
+	}
+
+	_, err = tran.Exec(fmt.Sprintf("UPDATE %s SET deleted=? WHERE deleted=0 AND flow_id=?", schema.FormTableName), ctimeUnix, flowID)
+	if err != nil {
+		_ = tran.Rollback()
+		return errors.Wrapf(err, "删除流程表单发生错误")
 	}
 
 	err = tran.Commit()
@@ -519,4 +531,13 @@ func (a *Flow) GetFlowQueryResultByCodeAndVersion(code string, version int64) (*
 	}
 
 	return &item, nil
+}
+
+// Update 更新流程信息
+func (a *Flow) Update(recordID string, info map[string]interface{}) error {
+	_, err := a.DB.UpdateByPK(schema.FlowTableName, db.M{"record_id": recordID}, db.M(info))
+	if err != nil {
+		return errors.Wrapf(err, "更新流程信息发生错误")
+	}
+	return nil
 }

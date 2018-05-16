@@ -206,3 +206,13 @@ func (a *Flow) QueryDoneIDs(flowCode, userID string) ([]string, error) {
 func (a *Flow) QueryGroupFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
 	return a.FlowModel.QueryGroupFlowPage(params, pageIndex, pageSize)
 }
+
+// UpdateFlowStatus 更新流程状态
+func (a *Flow) UpdateFlowStatus(recordID string, status int) error {
+	info := map[string]interface{}{
+		"updated": time.Now().Unix(),
+		"status":  status,
+	}
+
+	return a.FlowModel.Update(recordID, info)
+}
