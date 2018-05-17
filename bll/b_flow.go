@@ -207,6 +207,11 @@ func (a *Flow) QueryGroupFlowPage(params schema.FlowQueryParam, pageIndex, pageS
 	return a.FlowModel.QueryGroupFlowPage(params, pageIndex, pageSize)
 }
 
+// UpdateFlowInfo 更新流程
+func (a *Flow) UpdateFlowInfo(recordID string, info map[string]interface{}) error {
+	return a.FlowModel.Update(recordID, info)
+}
+
 // UpdateFlowStatus 更新流程状态
 func (a *Flow) UpdateFlowStatus(recordID string, status int) error {
 	info := map[string]interface{}{
@@ -214,5 +219,5 @@ func (a *Flow) UpdateFlowStatus(recordID string, status int) error {
 		"status":  status,
 	}
 
-	return a.FlowModel.Update(recordID, info)
+	return a.UpdateFlowInfo(recordID, info)
 }
