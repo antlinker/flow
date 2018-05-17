@@ -99,7 +99,8 @@ func (e *Engine) LoadFile(name string) error {
 	if err != nil {
 		return err
 	}
-	return e.CreateFlow(data)
+	_, err = e.CreateFlow(data)
+	return err
 }
 
 func (e *Engine) parseFormOperating(formOperating *schema.FormOperating, flow *schema.Flow, node *schema.Node, formResult *NodeFormResult) {
@@ -257,19 +258,19 @@ func (e *Engine) parseOperating(flow *schema.Flow, nodeResults []*NodeResult) (*
 }
 
 // CreateFlow 创建流程数据
-func (e *Engine) CreateFlow(data []byte) error {
+func (e *Engine) CreateFlow(data []byte) (string, error) {
 	result, err := e.parser.Parse(context.Background(), data)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// 检查流程是否存在，如果存在则检查版本号是否一致，如果不一致则创建新流程
 	oldFlow, err := e.flowBll.GetFlowByCode(result.FlowID)
 	if err != nil {
-		return err
+		return "", err
 	} else if oldFlow != nil {
 		if result.FlowVersion <= oldFlow.Version {
-			return nil
+			return "", nil
 		}
 	}
 
@@ -284,7 +285,11 @@ func (e *Engine) CreateFlow(data []byte) error {
 	}
 
 	nodeOperating, formOperating := e.parseOperating(flow, result.Nodes)
-	return e.flowBll.CreateFlow(flow, nodeOperating, formOperating)
+	err = e.flowBll.CreateFlow(flow, nodeOperating, formOperating)
+	if err != nil {
+		return "", err
+	}
+	return flow.RecordID, nil
 }
 
 // HandleResult 处理结果

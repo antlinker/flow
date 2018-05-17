@@ -93,7 +93,7 @@ func (a *API) SaveFlow(ctx *gear.Context) error {
 		return gear.ErrBadRequest.From(err)
 	}
 
-	err := a.engine.CreateFlow([]byte(req.XML))
+	_, err := a.engine.CreateFlow([]byte(req.XML))
 	if err != nil {
 		return gear.ErrInternalServerError.From(err)
 	}
