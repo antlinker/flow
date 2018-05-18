@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/antlinker/flow/util"
@@ -18,7 +19,9 @@ type xmlParser struct {
 }
 
 func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, error) {
-	result := &ParseResult{}
+	result := &ParseResult{
+		FlowStatus: 2,
+	}
 	var err error
 
 	doc := etree.NewDocument()
@@ -35,6 +38,12 @@ func (p *xmlParser) Parse(ctx context.Context, content []byte) (*ParseResult, er
 	}
 	if name := process.SelectAttr("name"); name != nil {
 		result.FlowName = name.Value
+	}
+	if v := process.SelectAttr("isExecutable"); v != nil {
+		b, _ := strconv.ParseBool(v.Value)
+		if b {
+			result.FlowStatus = 1
+		}
 	}
 	if version := process.SelectAttr("versionTag"); version != nil {
 		result.FlowVersion, err = util.StringToInt(version.Value)

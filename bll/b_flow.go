@@ -221,3 +221,15 @@ func (a *Flow) UpdateFlowStatus(recordID string, status int) error {
 
 	return a.UpdateFlowInfo(recordID, info)
 }
+
+// QueryFlowVersion 查询流程版本数据
+func (a *Flow) QueryFlowVersion(recordID string) ([]*schema.FlowQueryResult, error) {
+	flow, err := a.FlowModel.GetFlow(recordID)
+	if err != nil {
+		return nil, err
+	} else if flow == nil {
+		return nil, nil
+	}
+
+	return a.FlowModel.QueryFlowVersion(flow.Code)
+}

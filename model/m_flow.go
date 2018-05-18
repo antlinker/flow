@@ -509,9 +509,9 @@ func (a *Flow) QueryGroupFlowPage(params schema.FlowQueryParam, pageIndex, pageS
 
 	result := make([]*schema.FlowQueryResult, len(data))
 	for i, item := range data {
-		flowResult, err := a.GetFlowQueryResultByCodeAndVersion(item.Code, item.Version)
-		if err != nil {
-			return 0, nil, err
+		flowResult, verr := a.GetFlowQueryResultByCodeAndVersion(item.Code, item.Version)
+		if verr != nil {
+			return 0, nil, verr
 		}
 		result[i] = flowResult
 	}
@@ -540,4 +540,18 @@ func (a *Flow) Update(recordID string, info map[string]interface{}) error {
 		return errors.Wrapf(err, "更新流程信息发生错误")
 	}
 	return nil
+}
+
+// QueryFlowVersion 查询流程版本数据
+func (a *Flow) QueryFlowVersion(code string) ([]*schema.FlowQueryResult, error) {
+	query := fmt.Sprintf("SELECT id,record_id,created,code,name,version,type_code,status,memo FROM %s", schema.FlowTableName)
+	query = fmt.Sprintf("%s WHERE deleted=0 AND flag=1 AND code=? ORDER BY version", query)
+
+	var items []*schema.FlowQueryResult
+	_, err := a.DB.Select(&items, query, code)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询流程版本数据发生错误")
+	}
+
+	return items, nil
 }

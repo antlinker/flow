@@ -15,6 +15,7 @@ type ParseResult struct {
 	FlowID      string        // 流程ID
 	FlowName    string        // 流程名称
 	FlowVersion int64         // 流程版本号
+	FlowStatus  int           // 流程状态(1:可用 2:不可用)
 	Nodes       []*NodeResult // 节点数据
 }
 

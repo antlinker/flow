@@ -270,7 +270,7 @@ func (e *Engine) CreateFlow(data []byte) (string, error) {
 		return "", err
 	} else if oldFlow != nil {
 		if result.FlowVersion <= oldFlow.Version {
-			return "", nil
+			return oldFlow.RecordID, nil
 		}
 	}
 
@@ -280,7 +280,7 @@ func (e *Engine) CreateFlow(data []byte) (string, error) {
 		Name:     result.FlowName,
 		Version:  result.FlowVersion,
 		XML:      string(data),
-		Status:   1,
+		Status:   result.FlowStatus,
 		Created:  time.Now().Unix(),
 	}
 
