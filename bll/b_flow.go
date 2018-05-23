@@ -233,3 +233,28 @@ func (a *Flow) QueryFlowVersion(recordID string) ([]*schema.FlowQueryResult, err
 
 	return a.FlowModel.QueryFlowVersion(flow.Code)
 }
+
+// QueryFlowIDsByType 根据类型查询流程ID列表
+func (a *Flow) QueryFlowIDsByType(typeCode string) ([]string, error) {
+	return a.FlowModel.QueryFlowIDsByType(typeCode)
+}
+
+// QueryFlowByIDs 根据流程ID查询流程数据
+func (a *Flow) QueryFlowByIDs(flowIDs []string) ([]*schema.FlowQueryResult, error) {
+	return a.FlowModel.QueryFlowByIDs(flowIDs)
+}
+
+// GetFlowFormByNodeID 获取流程节点表单
+func (a *Flow) GetFlowFormByNodeID(nodeID string) (*schema.Form, error) {
+	return a.FlowModel.GetFlowFormByNodeID(nodeID)
+}
+
+// GetNodeByFlowAndTypeCode 根据流程ID和节点类型获取节点数据
+func (a *Flow) GetNodeByFlowAndTypeCode(flowID, typeCode string) (*schema.Node, error) {
+	return a.FlowModel.GetNodeByFlowAndTypeCode(flowID, typeCode)
+}
+
+// GetForm 获取流程表单
+func (a *Flow) GetForm(formID string) (*schema.Form, error) {
+	return a.FlowModel.GetForm(formID)
+}

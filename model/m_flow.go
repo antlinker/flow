@@ -555,3 +555,92 @@ func (a *Flow) QueryFlowVersion(code string) ([]*schema.FlowQueryResult, error) 
 
 	return items, nil
 }
+
+// QueryFlowIDsByType 根据类型查询流程ID列表
+func (a *Flow) QueryFlowIDsByType(typeCode string) ([]string, error) {
+	query := fmt.Sprintf("SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND type_code=?", schema.FlowTableName)
+
+	var items []*schema.Flow
+	_, err := a.DB.Select(&items, query, typeCode)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据类型查询流程ID列表发生错误")
+	}
+
+	ids := make([]string, len(items))
+	for i, item := range items {
+		ids[i] = item.RecordID
+	}
+	return ids, nil
+}
+
+// QueryFlowByIDs 根据流程ID查询流程数据
+func (a *Flow) QueryFlowByIDs(flowIDs []string) ([]*schema.FlowQueryResult, error) {
+	query := fmt.Sprintf("SELECT code,MAX(version)'version' FROM %s WHERE deleted=0 AND flag=1 AND record_id IN(?)  GROUP BY code ORDER BY code", schema.FlowTableName)
+
+	query, args, err := a.DB.In(query, flowIDs)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据流程ID查询流程数据发生错误")
+	}
+
+	var items []*schema.Flow
+	_, err = a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据流程ID查询流程数据发生错误")
+	} else if len(items) == 0 {
+		return nil, nil
+	}
+
+	result := make([]*schema.FlowQueryResult, len(items))
+	for i, item := range items {
+		flowResult, verr := a.GetFlowQueryResultByCodeAndVersion(item.Code, item.Version)
+		if verr != nil {
+			return nil, verr
+		}
+		result[i] = flowResult
+	}
+
+	return result, nil
+}
+
+// GetFlowFormByNodeID 获取流程节点表单
+func (a *Flow) GetFlowFormByNodeID(nodeID string) (*schema.Form, error) {
+	node, err := a.GetNode(nodeID)
+	if err != nil {
+		return nil, err
+	} else if node == nil || node.FormID == "" {
+		return nil, nil
+	}
+
+	return a.GetForm(node.FormID)
+}
+
+// GetNodeByFlowAndTypeCode 根据流程ID和节点类型获取节点数据
+func (a *Flow) GetNodeByFlowAndTypeCode(flowID, typeCode string) (*schema.Node, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_id=? AND type_code=?", schema.NodeTableName)
+
+	var item schema.Node
+	err := a.DB.SelectOne(&item, query, flowID, typeCode)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "根据流程ID和节点类型获取节点数据发生错误")
+	}
+
+	return &item, nil
+}
+
+// GetForm 获取流程表单
+func (a *Flow) GetForm(formID string) (*schema.Form, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.FormTableName)
+
+	var item schema.Form
+	err := a.DB.SelectOne(&item, query, formID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "获取流程表单发生错误")
+	}
+	return &item, nil
+}
