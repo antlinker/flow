@@ -175,7 +175,7 @@ func (n *NodeRouter) Next(processor string) error {
 		}
 	}
 
-	// 如果是结束时间或终止事件，则停止流转
+	// 如果是结束事件或终止事件，则停止流转
 	if nodeType == EndEvent ||
 		nodeType == TerminateEvent {
 		isEnd := false

@@ -1,6 +1,7 @@
 package bll
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/antlinker/flow/model"
@@ -128,6 +129,41 @@ func (a *Flow) StopFlowInstance(flowInstanceID string) error {
 		"status": 9,
 	}
 	return a.FlowModel.UpdateFlowInstance(flowInstanceID, info)
+}
+
+// LaunchFlowInstance2 发起流程实例（基于流程ID），返回流程实例、开始事件节点实例
+func (a *Flow) LaunchFlowInstance2(flowID, userID string, status int, inputData []byte) (*schema.FlowInstance, *schema.NodeInstance, error) {
+	node, err := a.GetNodeByFlowAndTypeCode(flowID, "startEvent")
+	if err != nil {
+		return nil, nil, err
+	} else if node == nil {
+		return nil, nil, fmt.Errorf("未知的流程节点")
+	}
+
+	flowInstance := &schema.FlowInstance{
+		RecordID:   util.UUID(),
+		FlowID:     flowID,
+		Launcher:   userID,
+		LaunchTime: time.Now().Unix(),
+		Status:     int64(status),
+		Created:    time.Now().Unix(),
+	}
+
+	nodeInstance := &schema.NodeInstance{
+		RecordID:       util.UUID(),
+		FlowInstanceID: flowInstance.RecordID,
+		NodeID:         node.RecordID,
+		InputData:      string(inputData),
+		Status:         1,
+		Created:        flowInstance.Created,
+	}
+
+	err = a.FlowModel.CreateFlowInstance(flowInstance, nodeInstance)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return flowInstance, nodeInstance, nil
 }
 
 // LaunchFlowInstance 发起流程实例

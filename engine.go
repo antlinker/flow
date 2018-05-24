@@ -359,6 +359,15 @@ func (e *Engine) StartFlow(ctx context.Context, flowCode, nodeCode, userID strin
 	return e.nextFlowHandle(ctx, nodeInstance.RecordID, userID, inputData)
 }
 
+// LaunchFlow 发起流程（基于流程ID）
+func (e *Engine) LaunchFlow(ctx context.Context, flowID, userID string, inputData []byte) (*HandleResult, error) {
+	_, ni, err := e.flowBll.LaunchFlowInstance2(flowID, userID, 1, inputData)
+	if err != nil {
+		return nil, err
+	}
+	return e.nextFlowHandle(ctx, ni.RecordID, userID, inputData)
+}
+
 // HandleFlow 处理流程节点
 // nodeInstanceID 节点实例内码
 // userID 处理人
