@@ -300,29 +300,35 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 
 // QueryTodo 查询用户的待办数据
 func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
+	var args []interface{}
 	query := fmt.Sprintf(`
-	SELECT
-	  ni.record_id,
-	  ni.flow_instance_id,
-	  ni.input_data,
-	  ni.node_id,
-	  f.data 'form_data',
-	  fi.launcher,
-	  fi.launch_time,
-		n.code 'node_code',
-		n.name 'node_name'
-	FROM %s ni
-	  JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
-	  LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
-	  LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
-	WHERE ni.deleted = 0 AND ni.status = 1 AND fi.status = 1 AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)
-	      AND ni.record_id IN (SELECT node_instance_id
-	                           FROM %s
-	                           WHERE deleted = 0 AND candidate_id = ?)
-	`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.FlowTableName, schema.NodeCandidateTableName)
+		SELECT
+		  ni.record_id,
+		  ni.flow_instance_id,
+		  ni.input_data,
+		  ni.node_id,
+		  f.data 'form_data',
+		  f.type_code 'form_type',
+		  fi.launcher,
+		  fi.launch_time,
+			n.code 'node_code',
+			n.name 'node_name'
+		FROM %s ni
+		  JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
+		  LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
+		  LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
+		WHERE ni.deleted = 0 AND ni.status = 1 AND fi.status = 1 AND ni.record_id IN (SELECT node_instance_id FROM %s WHERE deleted = 0 AND candidate_id = ?)
+		`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.NodeCandidateTableName)
+
+	args = append(args, userID)
+	if flowCode != "" {
+		query = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)", query, schema.FlowTableName)
+		args = append(args, flowCode)
+	}
+	query = fmt.Sprintf("%s ORDER BY ni.id", query)
 
 	var items []*schema.FlowTodoResult
-	_, err := a.DB.Select(&items, query, flowCode, userID)
+	_, err := a.DB.Select(&items, query, args...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "查询用户的待办数据发生错误")
 	}

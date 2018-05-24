@@ -222,6 +222,7 @@ type FlowTodoResult struct {
 	InputData      string  `db:"input_data" structs:"input_data" json:"input_data"`                   // 输入数据
 	Launcher       string  `db:"launcher" structs:"launcher" json:"launcher"`                         // 发起人
 	LaunchTime     int64   `db:"launch_time" structs:"launch_time" json:"launch_time"`                // 发起时间
+	FormType       *string `db:"form_type" structs:"form_type" json:"form_type"`                      // 表单类型
 	FormData       *string `db:"form_data" structs:"form_data" json:"form_data"`                      // 表单数据
 }
 
