@@ -237,6 +237,22 @@ type FlowHistoryResult struct {
 	Status      int64  `db:"status" structs:"status" json:"status"`                   // 处理状态(1:待处理 2:已完成)
 }
 
+// FlowDoneResult 流程已办结果
+type FlowDoneResult struct {
+	ID             int64   `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                  // 自增ID
+	RecordID       string  `db:"record_id" structs:"record_id" json:"record_id"`                      // 节点实例内码
+	FlowInstanceID string  `db:"flow_instance_id" structs:"flow_instance_id" json:"flow_instance_id"` // 流程实例内码
+	FlowName       string  `db:"flow_name" structs:"flow_name" json:"flow_name"`                      // 流程名称
+	FlowStatus     string  `db:"flow_status" structs:"flow_status" json:"flow_status"`                // 流程状态
+	ProcessTime    string  `db:"process_time" structs:"process_time" json:"process_time"`             // 处理时间
+	NodeName       string  `db:"node_name" structs:"node_name" json:"node_name"`                      // 节点名称
+	OutData        string  `db:"out_data" structs:"out_data" json:"out_data"`                         // 输出数据
+	Launcher       string  `db:"launcher" structs:"launcher" json:"launcher"`                         // 发起人
+	LaunchTime     int64   `db:"launch_time" structs:"launch_time" json:"launch_time"`                // 发起时间
+	FormType       *string `db:"form_type" structs:"form_type" json:"form_type"`                      // 表单类型
+	FormData       *string `db:"form_data" structs:"form_data" json:"form_data"`                      // 表单数据
+}
+
 // NodeOperating 节点操作
 type NodeOperating struct {
 	NodeGroup       []*Node
