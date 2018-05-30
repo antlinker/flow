@@ -216,6 +216,7 @@ type FlowQueryResult struct {
 type FlowTodoResult struct {
 	RecordID       string  `db:"record_id" structs:"record_id" json:"record_id"`                      // 节点实例内码
 	FlowInstanceID string  `db:"flow_instance_id" structs:"flow_instance_id" json:"flow_instance_id"` // 流程实例内码
+	FlowName       string  `db:"flow_name" structs:"flow_name" json:"flow_name"`                      // 流程名称
 	NodeID         string  `db:"node_id" structs:"node_id" json:"node_id"`                            // 节点内码
 	NodeCode       string  `db:"node_code" structs:"node_code" json:"node_code"`                      // 节点编号
 	NodeName       string  `db:"node_name" structs:"node_name" json:"node_name"`                      // 节点名称

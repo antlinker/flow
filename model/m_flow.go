@@ -312,13 +312,15 @@ func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, err
 		  fi.launcher,
 		  fi.launch_time,
 			n.code 'node_code',
-			n.name 'node_name'
+			n.name 'node_name',
+			fw.name 'flow_name'
 		FROM %s ni
 		  JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
 		  LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
 		  LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
+			LEFT JOIN %s fw ON n.flow_id = fw.record_id AND fw.deleted=n.deleted
 		WHERE ni.deleted = 0 AND ni.status = 1 AND fi.status = 1 AND ni.record_id IN (SELECT node_instance_id FROM %s WHERE deleted = 0 AND candidate_id = ?)
-		`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.NodeCandidateTableName)
+		`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.FlowTableName, schema.NodeCandidateTableName)
 
 	args = append(args, userID)
 	if flowCode != "" {
@@ -557,6 +559,19 @@ func (a *Flow) Update(recordID string, info map[string]interface{}) error {
 		return errors.Wrapf(err, "更新流程信息发生错误")
 	}
 	return nil
+}
+
+// QueryNodeProperty 查询节点属性
+func (a *Flow) QueryNodeProperty(nodeID string) ([]*schema.NodeProperty, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND node_id=?", schema.NodePropertyTableName)
+
+	var items []*schema.NodeProperty
+	_, err := a.DB.Select(&items, query, nodeID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询节点属性发生错误")
+	}
+
+	return items, nil
 }
 
 // -----------------------------web查询操作(start)-------------------------------

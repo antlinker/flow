@@ -299,3 +299,17 @@ func (a *Flow) GetNodeByFlowAndTypeCode(flowID, typeCode string) (*schema.Node, 
 func (a *Flow) GetForm(formID string) (*schema.Form, error) {
 	return a.FlowModel.GetForm(formID)
 }
+
+// GetNodeProperty 获取节点属性
+func (a *Flow) GetNodeProperty(nodeID string) (map[string]string, error) {
+	items, err := a.FlowModel.QueryNodeProperty(nodeID)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make(map[string]string)
+	for _, item := range items {
+		data[item.Name] = item.Value
+	}
+	return data, nil
+}
