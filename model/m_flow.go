@@ -337,29 +337,48 @@ func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, err
 	return items, nil
 }
 
-// QueryDone 查询用户的已办数据
-func (a *Flow) QueryDone(flowCode, userID string, lastID int64, count int) ([]*schema.FlowDoneResult, error) {
+// GetTodoByID 根据ID获取待办
+func (a *Flow) GetTodoByID(nodeInstanceID string) (*schema.FlowTodoResult, error) {
+	query := fmt.Sprintf(`
+		SELECT
+		  ni.record_id,
+		  ni.flow_instance_id,
+		  ni.input_data,
+		  ni.node_id,
+		  f.data 'form_data',
+		  f.type_code 'form_type',
+		  fi.launcher,
+		  fi.launch_time,
+			n.code 'node_code',
+			n.name 'node_name',
+			fw.name 'flow_name'
+		FROM %s ni
+		  JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
+		  LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
+		  LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
+			LEFT JOIN %s fw ON n.flow_id = fw.record_id AND fw.deleted=n.deleted
+		WHERE ni.deleted = 0 AND ni.status = 1 AND fi.status = 1 AND ni.record_id=?
+		`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.FlowTableName)
+
+	var item schema.FlowTodoResult
+	err := a.DB.SelectOne(&item, query, nodeInstanceID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据ID获取待办发生错误")
+	}
+	return &item, nil
+}
+
+// GetDoneByID 根据ID获取已办
+func (a *Flow) GetDoneByID(nodeInstanceID string) (*schema.FlowDoneResult, error) {
 	table := fmt.Sprintf(`%s ni
 		JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
 		LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
 		LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
 		LEFT JOIN %s fw ON n.flow_id = fw.record_id AND fw.deleted=n.deleted`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.FlowTableName)
 
-	where := "WHERE ni.deleted = 0 AND ni.status = 2 AND ni.processor=?"
-	args := []interface{}{userID}
-
-	if flowCode != "" {
-		where = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)", where, schema.FlowTableName)
-		args = append(args, flowCode)
-	}
-
-	if lastID > 0 {
-		where = fmt.Sprintf("%s AND ni.id<?", where)
-		args = append(args, lastID)
-	}
+	where := "WHERE ni.deleted = 0 AND ni.status = 2 AND n.type_code='userTask' AND ni.record_id=?"
 
 	fieldsSelect := `
-	ni.id,
 	ni.record_id,
 	ni.flow_instance_id,
 	ni.out_data,
@@ -369,10 +388,57 @@ func (a *Flow) QueryDone(flowCode, userID string, lastID int64, count int) ([]*s
 	fi.status 'flow_status',
 	fi.launcher,
 	fi.launch_time,
+	n.record_id 'node_id',
 	n.name 'node_name',
 	fw.name 'flow_name'`
 
-	query := fmt.Sprintf("SELECT %s FROM %s %s ORDER BY ni.id DESC LIMIT %d", fieldsSelect, table, where, count)
+	query := fmt.Sprintf("SELECT %s FROM %s %s", fieldsSelect, table, where)
+
+	var item schema.FlowDoneResult
+	err := a.DB.SelectOne(&item, query, nodeInstanceID)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据ID获取已办发生错误")
+	}
+
+	return &item, nil
+}
+
+// QueryDone 查询用户的已办数据
+func (a *Flow) QueryDone(flowCode, userID string, lastTime int64, count int) ([]*schema.FlowDoneResult, error) {
+	table := fmt.Sprintf(`%s ni
+		JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
+		LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
+		LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
+		LEFT JOIN %s fw ON n.flow_id = fw.record_id AND fw.deleted=n.deleted`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.FlowTableName)
+
+	where := "WHERE ni.deleted = 0 AND ni.status = 2 AND n.type_code='userTask' AND ni.processor=?"
+	args := []interface{}{userID}
+
+	if flowCode != "" {
+		where = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)", where, schema.FlowTableName)
+		args = append(args, flowCode)
+	}
+
+	if lastTime > 0 {
+		where = fmt.Sprintf("%s AND ni.process_time<?", where)
+		args = append(args, lastTime)
+	}
+
+	fieldsSelect := `
+	ni.record_id,
+	ni.flow_instance_id,
+	ni.out_data,
+	ni.process_time,
+	f.data 'form_data',
+	f.type_code 'form_type',
+	fi.status 'flow_status',
+	fi.launcher,
+	fi.launch_time,
+	n.record_id 'node_id',
+	n.name 'node_name',
+	fw.name 'flow_name'`
+
+	query := fmt.Sprintf("SELECT %s FROM %s %s ORDER BY ni.process_time DESC LIMIT %d", fieldsSelect, table, where, count)
 
 	var items []*schema.FlowDoneResult
 	_, err := a.DB.Select(&items, query, args...)
@@ -435,7 +501,24 @@ func (a *Flow) DeleteFlow(flowID string) error {
 
 // QueryHistory 查询流程实例历史数据
 func (a *Flow) QueryHistory(flowInstanceID string) ([]*schema.FlowHistoryResult, error) {
-	query := fmt.Sprintf("SELECT ni.record_id,ni.processor,ni.process_time,ni.out_data,ni.status,n.code 'node_code',n.name 'node_name' FROM %s ni JOIN %s n ON ni.node_id=n.record_id AND n.deleted=ni.deleted WHERE ni.deleted=0 AND ni.flow_instance_id=? AND n.type_code='userTask' ORDER BY ni.status DESC,ni.process_time", schema.NodeInstanceTableName, schema.NodeTableName)
+	query := fmt.Sprintf(`
+		SELECT
+		ni.record_id,
+		ni.processor,
+		ni.process_time,
+		ni.input_data,
+		ni.out_data,
+		ni.status,
+		n.record_id 'node_id',
+		n.code 'node_code',
+		n.name 'node_name',
+		f.data 'form_data',
+		f.type_code 'form_type'
+		FROM %s ni JOIN %s n ON ni.node_id=n.record_id AND n.deleted=ni.deleted
+		LEFT JOIN %s f ON n.form_id = f.record_id AND f.deleted = n.deleted
+		WHERE ni.deleted=0 AND ni.flow_instance_id=? AND n.type_code='userTask'
+		ORDER BY ni.status DESC,ni.process_time
+		`, schema.NodeInstanceTableName, schema.NodeTableName, schema.FormTableName)
 
 	var items []*schema.FlowHistoryResult
 	_, err := a.DB.Select(&items, query, flowInstanceID)

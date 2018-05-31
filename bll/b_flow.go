@@ -218,9 +218,19 @@ func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, err
 	return a.FlowModel.QueryTodo(flowCode, userID)
 }
 
+// GetTodoByID 根据ID获取待办
+func (a *Flow) GetTodoByID(nodeInstanceID string) (*schema.FlowTodoResult, error) {
+	return a.FlowModel.GetTodoByID(nodeInstanceID)
+}
+
+// GetDoneByID 根据ID获取已办
+func (a *Flow) GetDoneByID(nodeInstanceID string) (*schema.FlowDoneResult, error) {
+	return a.FlowModel.GetDoneByID(nodeInstanceID)
+}
+
 // QueryDone 查询用户的已办数据
-func (a *Flow) QueryDone(flowCode, userID string, lastID int64, count int) ([]*schema.FlowDoneResult, error) {
-	return a.QueryDone(flowCode, userID, lastID, count)
+func (a *Flow) QueryDone(flowCode, userID string, lastTime int64, count int) ([]*schema.FlowDoneResult, error) {
+	return a.FlowModel.QueryDone(flowCode, userID, lastTime, count)
 }
 
 // QueryAllFlowPage 查询流程分页数据
