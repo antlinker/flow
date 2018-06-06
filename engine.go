@@ -306,8 +306,9 @@ func (r *HandleResult) String() string {
 
 // NextNode 下一节点
 type NextNode struct {
-	Node         *schema.Node // 节点信息
-	CandidateIDs []string     // 节点候选人
+	Node         *schema.Node         // 节点信息
+	CandidateIDs []string             // 节点候选人
+	NodeInstance *schema.NodeInstance // 节点实例
 }
 
 func (e *Engine) nextFlowHandle(ctx context.Context, nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
@@ -321,6 +322,7 @@ func (e *Engine) nextFlowHandle(ctx context.Context, nodeInstanceID, userID stri
 
 		result.NextNodes = append(result.NextNodes, &NextNode{
 			Node:         node,
+			NodeInstance: nodeInstance,
 			CandidateIDs: cids,
 		})
 	})
