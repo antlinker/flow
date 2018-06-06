@@ -83,6 +83,19 @@ func (a *Flow) GetFlowByCode(code string) (*schema.Flow, error) {
 	return &flow, nil
 }
 
+// QueryFlowByCode 根据流程编号查询流程数据
+func (a *Flow) QueryFlowByCode(flowCode string) ([]*schema.Flow, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flag=1 AND status=1 AND code=? ORDER BY version DESC", schema.FlowTableName)
+
+	var items []*schema.Flow
+	_, err := a.DB.Select(&items, query, flowCode)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据流程编号查询流程数据发生错误")
+	}
+
+	return items, nil
+}
+
 // GetNode 获取流程节点
 func (a *Flow) GetNode(recordID string) (*schema.Node, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND record_id=?", schema.NodeTableName)

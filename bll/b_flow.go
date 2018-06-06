@@ -24,6 +24,11 @@ func (a *Flow) GetFlowByCode(code string) (*schema.Flow, error) {
 	return a.FlowModel.GetFlowByCode(code)
 }
 
+// QueryFlowByCode 根据流程编号查询流程数据
+func (a *Flow) QueryFlowByCode(flowCode string) ([]*schema.Flow, error) {
+	return a.FlowModel.QueryFlowByCode(flowCode)
+}
+
 // CreateFlow 创建流程数据
 func (a *Flow) CreateFlow(flow *schema.Flow, nodes *schema.NodeOperating, forms *schema.FormOperating) error {
 	if flow.Flag == 0 {
