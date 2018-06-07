@@ -461,6 +461,17 @@ func (a *Flow) QueryDone(flowCode, userID string, lastTime int64, count int) ([]
 	return items, nil
 }
 
+// GetDoneCount 获取已办数量
+func (a *Flow) GetDoneCount(userID string) (int64, error) {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE deleted=0 AND status=2 AND processor=?", schema.NodeInstanceTableName)
+
+	n, err := a.DB.SelectInt(query, userID)
+	if err != nil {
+		return 0, errors.Wrapf(err, "获取已办数量发生错误")
+	}
+	return n, nil
+}
+
 // DeleteFlow 删除流程
 func (a *Flow) DeleteFlow(flowID string) error {
 	tran, err := a.DB.Begin()

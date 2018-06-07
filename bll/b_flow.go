@@ -238,6 +238,11 @@ func (a *Flow) QueryDone(flowCode, userID string, lastTime int64, count int) ([]
 	return a.FlowModel.QueryDone(flowCode, userID, lastTime, count)
 }
 
+// GetDoneCount 获取已办数量
+func (a *Flow) GetDoneCount(userID string) (int64, error) {
+	return a.FlowModel.GetDoneCount(userID)
+}
+
 // QueryAllFlowPage 查询流程分页数据
 func (a *Flow) QueryAllFlowPage(params schema.FlowQueryParam, pageIndex, pageSize uint) (int64, []*schema.FlowQueryResult, error) {
 	return a.FlowModel.QueryAllFlowPage(params, pageIndex, pageSize)
