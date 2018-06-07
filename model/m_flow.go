@@ -681,6 +681,36 @@ func (a *Flow) QueryNodeProperty(nodeID string) ([]*schema.NodeProperty, error) 
 	return items, nil
 }
 
+// CreateNodeTiming 创建定时节点
+func (a *Flow) CreateNodeTiming(item *schema.NodeTiming) error {
+	err := a.DB.Insert(item)
+	if err != nil {
+		return errors.Wrapf(err, "创建节点定时发生错误")
+	}
+	return nil
+}
+
+// UpdateNodeTiming 更新定时节点
+func (a *Flow) UpdateNodeTiming(nodeInstanceID string, info map[string]interface{}) error {
+	_, err := a.DB.UpdateByPK(schema.NodeTimingTableName, db.M{"node_instance_id": nodeInstanceID}, db.M(info))
+	if err != nil {
+		return errors.Wrapf(err, "更新节点定时发生错误")
+	}
+	return nil
+}
+
+// QueryExpiredNodeTiming 查询到期的定时节点
+func (a *Flow) QueryExpiredNodeTiming() ([]*schema.NodeTiming, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND expired_at < ? ORDER BY expired_at", schema.NodeTimingTableName)
+
+	var items []*schema.NodeTiming
+	_, err := a.DB.Select(&items, query, time.Now().Unix())
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询到期的节点定时发生错误")
+	}
+	return items, nil
+}
+
 // -----------------------------web查询操作(start)-------------------------------
 
 // QueryAllFlowPage 查询流程分页数据

@@ -9,6 +9,7 @@ const (
 	NodePropertyTableName    = "f_node_property"
 	FlowInstanceTableName    = "f_flow_instance"
 	NodeInstanceTableName    = "f_node_instance"
+	NodeTimingTableName      = "f_node_timing"
 	NodeCandidateTableName   = "f_node_candidate"
 	FormTableName            = "f_form"
 	FormFieldTableName       = "f_form_field"
@@ -114,6 +115,17 @@ type NodeInstance struct {
 	Created        int64  `db:"created" structs:"created" json:"created"`                                    // 创建时间戳
 	Updated        int64  `db:"updated" structs:"updated" json:"updated"`                                    // 更新时间戳
 	Deleted        int64  `db:"deleted" structs:"deleted" json:"deleted"`                                    // 删除时间戳
+}
+
+// NodeTiming 节点定时
+type NodeTiming struct {
+	ID             int64  `db:"id,primarykey,autoincrement" structs:"id" json:"id"`                  // 唯一标识(自增ID)
+	NodeInstanceID string `db:"node_instance_id" structs:"node_instance_id" json:"node_instance_id"` // 节点实例ID
+	Flag           string `db:"flag" structs:"flag" json:"flag"`                                     // 标志
+	Processor      string `db:"processor,size:36" structs:"processor" json:"processor"`              // 处理人
+	ExpiredAt      int64  `db:"expired_at" structs:"expired_at" json:"expired_at"`                   // 过期时间戳
+	Created        int64  `db:"created" structs:"created" json:"created"`                            // 创建时间戳
+	Deleted        int64  `db:"deleted" structs:"deleted" json:"deleted"`                            // 删除时间戳
 }
 
 // NodeCandidate 节点候选人

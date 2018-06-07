@@ -333,3 +333,19 @@ func (a *Flow) GetNodeProperty(nodeID string) (map[string]string, error) {
 	}
 	return data, nil
 }
+
+// CreateNodeTiming 创建定时节点
+func (a *Flow) CreateNodeTiming(item *schema.NodeTiming) error {
+	item.ID = 0
+	return a.FlowModel.CreateNodeTiming(item)
+}
+
+// DeleteNodeTiming 删除定时节点
+func (a *Flow) DeleteNodeTiming(nodeInstanceID string) error {
+	return a.FlowModel.UpdateNodeTiming(nodeInstanceID, map[string]interface{}{"deleted": time.Now().Unix()})
+}
+
+// QueryExpiredNodeTiming 查询到期的定时节点
+func (a *Flow) QueryExpiredNodeTiming() ([]*schema.NodeTiming, error) {
+	return a.FlowModel.QueryExpiredNodeTiming()
+}

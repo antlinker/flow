@@ -13,6 +13,7 @@ func FlowDBMap(db *db.DB) {
 	db.AddTableWithName(schema.NodeAssignment{}, schema.NodeAssignmentTableName)
 	db.AddTableWithName(schema.FlowInstance{}, schema.FlowInstanceTableName)
 	db.AddTableWithName(schema.NodeInstance{}, schema.NodeInstanceTableName)
+	db.AddTableWithName(schema.NodeTiming{}, schema.NodeTimingTableName)
 	db.AddTableWithName(schema.NodeCandidate{}, schema.NodeCandidateTableName)
 	db.AddTableWithName(schema.Form{}, schema.FormTableName)
 	db.AddTableWithName(schema.FormField{}, schema.FormFieldTableName)

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/antlinker/flow/bll"
@@ -20,11 +21,25 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Logger 定义日志接口
+type Logger interface {
+	Errorf(format string, args ...interface{})
+}
+
+// AutoCallbackHandler 自动执行节点回调处理
+type AutoCallbackHandler func(flag, userID string, input []byte, result *HandleResult)
+
 // Engine 流程引擎
 type Engine struct {
-	flowBll *bll.Flow
-	parser  Parser
-	execer  Execer
+	flowBll      *bll.Flow
+	parser       Parser
+	execer       Execer
+	logger       Logger
+	timingStart  bool
+	timingTicker *time.Ticker
+	timingWg     *sync.WaitGroup
+	getDBContext func(flag string) context.Context
+	autoCallback AutoCallbackHandler
 }
 
 // Init 初始化流程引擎
@@ -69,11 +84,103 @@ func (e *Engine) SetExecer(execer Execer) {
 	e.execer = execer
 }
 
+// SetLogger 设定日志接口
+func (e *Engine) SetLogger(logger Logger) {
+	e.logger = logger
+}
+
+// SetGetDBContext 设定获取DB上下文
+func (e *Engine) SetGetDBContext(fn func(flag string) context.Context) {
+	e.getDBContext = fn
+}
+
+// SetAutoCallback 设定自动节点回调函数
+func (e *Engine) SetAutoCallback(callback AutoCallbackHandler) {
+	e.autoCallback = callback
+}
+
 // FlowBll 流程业务
 func (e *Engine) FlowBll() *bll.Flow {
 	return e.flowBll
 }
 
+func (e *Engine) errorf(format string, args ...interface{}) {
+	if e.logger != nil {
+		e.logger.Errorf(format, args...)
+	}
+}
+
+// StartTiming 启动定时器
+func (e *Engine) StartTiming(interval time.Duration) {
+	if e.timingStart {
+		return
+	}
+
+	e.timingStart = true
+	e.timingWg = new(sync.WaitGroup)
+	e.timingTicker = time.NewTicker(interval)
+	for range e.timingTicker.C {
+		items, err := e.flowBll.QueryExpiredNodeTiming()
+		if err != nil {
+			e.errorf("%+v", err)
+			continue
+		}
+
+		for _, item := range items {
+			err = e.handleExpiredNodeTiming(item)
+			if err != nil {
+				e.errorf("%+v", err)
+				continue
+			}
+		}
+	}
+}
+
+// 处理定时节点
+func (e *Engine) handleExpiredNodeTiming(item *schema.NodeTiming) error {
+	e.timingWg.Add(1)
+	defer e.timingWg.Done()
+
+	ni, err := e.flowBll.GetNodeInstance(item.NodeInstanceID)
+	if err != nil {
+		return err
+	} else if ni.Status != 1 {
+		return nil
+	}
+
+	ctx := context.Background()
+	if fn := e.getDBContext; fn != nil {
+		ctx = fn(item.Flag)
+	}
+
+	result, err := e.HandleFlow(ctx, item.NodeInstanceID, item.Processor, []byte(ni.InputData))
+	if err != nil {
+		return err
+	}
+
+	err = e.flowBll.DeleteNodeTiming(item.NodeInstanceID)
+	if err != nil {
+		return err
+	}
+
+	if fn := e.autoCallback; fn != nil {
+		fn(item.Flag, item.Processor, []byte(ni.InputData), result)
+	}
+
+	return nil
+}
+
+// StopTiming 停止定时器
+func (e *Engine) StopTiming() {
+	if !e.timingStart {
+		return
+	}
+	e.timingStart = false
+	e.timingTicker.Stop()
+	e.timingWg.Wait()
+}
+
+// 读取XML文件
 func (e *Engine) parseFile(name string) ([]byte, error) {
 	fullName, err := filepath.Abs(name)
 	if err != nil {
@@ -285,6 +392,30 @@ func (e *Engine) CreateFlow(data []byte) (string, error) {
 	}
 
 	nodeOperating, formOperating := e.parseOperating(flow, result.Nodes)
+
+	// 解析节点表单数据
+	for _, node := range result.Nodes {
+		// 查找表单ID不为空并且不包含表单字段的节点
+		if node.FormResult != nil && node.FormResult.ID != "" && len(node.FormResult.Fields) == 0 {
+			// 查找表单ID
+			var formID string
+			for _, form := range formOperating.FormGroup {
+				if form.Code == node.FormResult.ID {
+					formID = form.RecordID
+					break
+				}
+			}
+			if formID != "" {
+				for i, ns := range nodeOperating.NodeGroup {
+					if ns.Code == node.NodeID {
+						nodeOperating.NodeGroup[i].FormID = formID
+						break
+					}
+				}
+			}
+		}
+	}
+
 	err = e.flowBll.CreateFlow(flow, nodeOperating, formOperating)
 	if err != nil {
 		return "", err
@@ -341,6 +472,37 @@ func (e *Engine) nextFlowHandle(ctx context.Context, nodeInstanceID, userID stri
 		return nil, err
 	}
 	result.FlowInstance = nr.GetFlowInstance()
+
+	if !result.IsEnd {
+		for _, item := range result.NextNodes {
+			prop, verr := e.flowBll.GetNodeProperty(item.Node.RecordID)
+			if verr != nil {
+				return nil, verr
+			}
+
+			// 检查节点是否设定定时器，如果设定则加入定时
+			if v := prop["timing"]; v != "" {
+				expired, verr := strconv.Atoi(v)
+				if verr == nil && expired > 0 {
+					nt := &schema.NodeTiming{
+						NodeInstanceID: item.NodeInstance.RecordID,
+						Processor:      item.CandidateIDs[0],
+						ExpiredAt:      time.Now().Add(time.Duration(expired) * time.Minute).Unix(),
+						Created:        time.Now().Unix(),
+					}
+
+					if v, ok := FromFlagContext(ctx); ok {
+						nt.Flag = v
+					}
+
+					err = e.flowBll.CreateNodeTiming(nt)
+					if err != nil {
+						e.errorf("%+v", err)
+					}
+				}
+			}
+		}
+	}
 
 	return &result, nil
 }
