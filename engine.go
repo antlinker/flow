@@ -27,7 +27,7 @@ type Logger interface {
 }
 
 // AutoCallbackHandler 自动执行节点回调处理
-type AutoCallbackHandler func(flag, userID string, input []byte, result *HandleResult)
+type AutoCallbackHandler func(action, flag, userID string, input []byte, result *HandleResult) error
 
 // Engine 流程引擎
 type Engine struct {
@@ -164,7 +164,10 @@ func (e *Engine) handleExpiredNodeTiming(item *schema.NodeTiming) error {
 	}
 
 	if fn := e.autoCallback; fn != nil {
-		fn(item.Flag, item.Processor, []byte(ni.InputData), result)
+		err = fn("", item.Flag, item.Processor, []byte(ni.InputData), result)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
