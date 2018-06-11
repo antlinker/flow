@@ -119,6 +119,11 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 		node.CandidateUsers = candidateUserList
 	}
 
+	nodeFormResult := new(NodeFormResult)
+	if formKey := element.SelectAttr("formKey"); formKey != nil {
+		nodeFormResult.ID = formKey.Value
+	}
+
 	if extensionElements := element.SelectElement("extensionElements"); extensionElements != nil {
 		if formData := extensionElements.SelectElement("formData"); formData != nil {
 			form, err := p.ParseFormData(formData)
@@ -126,11 +131,8 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 				return nil, err
 			}
 			if form != nil {
-				if formKey := element.SelectAttr("formKey"); formKey != nil {
-					form.ID = formKey.Value
-				}
+				nodeFormResult.Fields = form.Fields
 			}
-			node.FormResult = form
 		}
 
 		if propertyData := extensionElements.SelectElement("properties"); propertyData != nil {
@@ -143,13 +145,13 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 				if value := p.SelectAttr("value"); value != nil {
 					item.Value = value.Value
 				}
-
 				if item.Name != "" {
 					node.Properties = append(node.Properties, &item)
 				}
 			}
 		}
 	}
+	node.FormResult = nodeFormResult
 
 	return &node, nil
 }

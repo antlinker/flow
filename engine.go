@@ -119,21 +119,25 @@ func (e *Engine) StartTiming(interval time.Duration) {
 	e.timingStart = true
 	e.timingWg = new(sync.WaitGroup)
 	e.timingTicker = time.NewTicker(interval)
-	for range e.timingTicker.C {
-		items, err := e.flowBll.QueryExpiredNodeTiming()
-		if err != nil {
-			e.errorf("%+v", err)
-			continue
-		}
 
-		for _, item := range items {
-			err = e.handleExpiredNodeTiming(item)
+	go func() {
+		for range e.timingTicker.C {
+			items, err := e.flowBll.QueryExpiredNodeTiming()
 			if err != nil {
 				e.errorf("%+v", err)
 				continue
 			}
+
+			for _, item := range items {
+				err = e.handleExpiredNodeTiming(item)
+				if err != nil {
+					e.errorf("%+v", err)
+					continue
+				}
+			}
 		}
-	}
+	}()
+
 }
 
 // 处理定时节点
