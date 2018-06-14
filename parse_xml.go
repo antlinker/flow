@@ -3,7 +3,6 @@ package flow
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	"github.com/antlinker/flow/util"
 
@@ -115,8 +114,7 @@ func (p *xmlParser) ParseNode(element *etree.Element) (*nodeInfo, error) {
 		node.Code = id.Value
 	}
 	if candidateUsers := element.SelectAttr("candidateUsers"); candidateUsers != nil {
-		candidateUserList := strings.Split(candidateUsers.Value, ";")
-		node.CandidateUsers = candidateUserList
+		node.CandidateUsers = []string{candidateUsers.Value}
 	}
 
 	nodeFormResult := new(NodeFormResult)
