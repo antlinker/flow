@@ -148,7 +148,7 @@ func (e *Engine) handleExpiredNodeTiming(item *schema.NodeTiming) error {
 	ni, err := e.flowBll.GetNodeInstance(item.NodeInstanceID)
 	if err != nil {
 		return err
-	} else if ni.Status != 1 {
+	} else if ni == nil || ni.Status != 1 {
 		return nil
 	}
 
@@ -547,7 +547,7 @@ func (e *Engine) HandleFlow(ctx context.Context, nodeInstanceID, userID string, 
 	nodeInstance, err := e.flowBll.GetNodeInstance(nodeInstanceID)
 	if err != nil {
 		return nil, err
-	} else if nodeInstance.Status != 1 {
+	} else if nodeInstance == nil || nodeInstance.Status != 1 {
 		return nil, nil
 	}
 	return e.nextFlowHandle(ctx, nodeInstanceID, userID, inputData)
