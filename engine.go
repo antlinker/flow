@@ -157,6 +157,24 @@ func (e *Engine) handleExpiredNodeTiming(item *schema.NodeTiming) error {
 		ctx = fn(item.Flag)
 	}
 
+	if item.Input != "" {
+		var v map[string]interface{}
+		json.Unmarshal([]byte(item.Input), &v)
+
+		if ni.InputData != "" {
+			iv := make(map[string]interface{})
+			json.Unmarshal([]byte(ni.InputData), &iv)
+
+			for key, val := range v {
+				iv[key] = val
+			}
+			v = iv
+		}
+
+		buf, _ := json.Marshal(v)
+		ni.InputData = string(buf)
+	}
+
 	result, err := e.HandleFlow(ctx, item.NodeInstanceID, item.Processor, []byte(ni.InputData))
 	if err != nil {
 		return err
@@ -494,6 +512,7 @@ func (e *Engine) nextFlowHandle(ctx context.Context, nodeInstanceID, userID stri
 					nt := &schema.NodeTiming{
 						NodeInstanceID: item.NodeInstance.RecordID,
 						Processor:      item.CandidateIDs[0],
+						Input:          prop["timing_input"],
 						ExpiredAt:      time.Now().Add(time.Duration(expired) * time.Minute).Unix(),
 						Created:        time.Now().Unix(),
 					}
