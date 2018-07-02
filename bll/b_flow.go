@@ -351,13 +351,13 @@ func (a *Flow) QueryExpiredNodeTiming() ([]*schema.NodeTiming, error) {
 }
 
 // QueryLaunchFlowInstanceResult 查询发起的流程实例数据
-func (a *Flow) QueryLaunchFlowInstanceResult(launcher, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
-	return a.FlowModel.QueryLaunchFlowInstanceResult(launcher, flowCode, lastID, count)
+func (a *Flow) QueryLaunchFlowInstanceResult(launcher, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+	return a.FlowModel.QueryLaunchFlowInstanceResult(launcher, typeCode, flowCode, lastID, count)
 }
 
 // QueryHandleFlowInstanceResult 查询处理的流程实例结果
-func (a *Flow) QueryHandleFlowInstanceResult(processor, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
-	return a.FlowModel.QueryHandleFlowInstanceResult(processor, flowCode, lastID, count)
+func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+	return a.FlowModel.QueryHandleFlowInstanceResult(processor, typeCode, flowCode, lastID, count)
 }
 
 // QueryLastNodeInstance 查询节点实例

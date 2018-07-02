@@ -712,12 +712,16 @@ func (a *Flow) QueryExpiredNodeTiming() ([]*schema.NodeTiming, error) {
 }
 
 // QueryLaunchFlowInstanceResult 查询发起的流程实例数据
-func (a *Flow) QueryLaunchFlowInstanceResult(launcher, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+func (a *Flow) QueryLaunchFlowInstanceResult(launcher, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
 	var args []interface{}
 	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0", schema.FlowInstanceTableName, schema.FlowTableName)
 	query = fmt.Sprintf("%s AND fi.launcher=?", query)
 	args = append(args, launcher)
 
+	if typeCode != "" {
+		query = fmt.Sprintf("%s AND f.type_code=?", query)
+		args = append(args, typeCode)
+	}
 	if flowCode != "" {
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
@@ -739,12 +743,16 @@ func (a *Flow) QueryLaunchFlowInstanceResult(launcher, flowCode string, lastID i
 }
 
 // QueryHandleFlowInstanceResult 查询处理的流程实例结果
-func (a *Flow) QueryHandleFlowInstanceResult(processor, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
 	var args []interface{}
 	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0", schema.FlowInstanceTableName, schema.FlowTableName)
 	query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=2 AND processor=?)", query, schema.NodeInstanceTableName)
 	args = append(args, processor)
 
+	if typeCode != "" {
+		query = fmt.Sprintf("%s AND f.type_code=?", query)
+		args = append(args, typeCode)
+	}
 	if flowCode != "" {
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
