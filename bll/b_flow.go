@@ -349,3 +349,18 @@ func (a *Flow) DeleteNodeTiming(nodeInstanceID string) error {
 func (a *Flow) QueryExpiredNodeTiming() ([]*schema.NodeTiming, error) {
 	return a.FlowModel.QueryExpiredNodeTiming()
 }
+
+// QueryLaunchFlowInstanceResult 查询发起的流程实例数据
+func (a *Flow) QueryLaunchFlowInstanceResult(launcher, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+	return a.FlowModel.QueryLaunchFlowInstanceResult(launcher, flowCode, lastID, count)
+}
+
+// QueryHandleFlowInstanceResult 查询处理的流程实例结果
+func (a *Flow) QueryHandleFlowInstanceResult(processor, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+	return a.FlowModel.QueryHandleFlowInstanceResult(processor, flowCode, lastID, count)
+}
+
+// QueryLastNodeInstance 查询节点实例
+func (a *Flow) QueryLastNodeInstance(flowInstanceID string) (*schema.NodeInstance, error) {
+	return a.FlowModel.QueryLastNodeInstance(flowInstanceID)
+}

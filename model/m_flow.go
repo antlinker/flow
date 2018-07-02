@@ -711,6 +711,76 @@ func (a *Flow) QueryExpiredNodeTiming() ([]*schema.NodeTiming, error) {
 	return items, nil
 }
 
+// QueryLaunchFlowInstanceResult 查询发起的流程实例数据
+func (a *Flow) QueryLaunchFlowInstanceResult(launcher, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+	var args []interface{}
+	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0", schema.FlowInstanceTableName, schema.FlowTableName)
+	query = fmt.Sprintf("%s AND fi.launcher=?", query)
+	args = append(args, launcher)
+
+	if flowCode != "" {
+		query = fmt.Sprintf("%s AND f.code=?", query)
+		args = append(args, flowCode)
+	}
+	if lastID > 0 {
+		query = fmt.Sprintf("%s AND fi.id<?", query)
+		args = append(args, lastID)
+	}
+
+	query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d", query, count)
+
+	var items []*schema.FlowInstanceResult
+	_, err := a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询发起的流程实例数据发生错误")
+	}
+
+	return items, nil
+}
+
+// QueryHandleFlowInstanceResult 查询处理的流程实例结果
+func (a *Flow) QueryHandleFlowInstanceResult(processor, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+	var args []interface{}
+	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0", schema.FlowInstanceTableName, schema.FlowTableName)
+	query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=2 AND processor=?)", query, schema.NodeInstanceTableName)
+	args = append(args, processor)
+
+	if flowCode != "" {
+		query = fmt.Sprintf("%s AND f.code=?", query)
+		args = append(args, flowCode)
+	}
+	if lastID > 0 {
+		query = fmt.Sprintf("%s AND fi.id<?", query)
+		args = append(args, lastID)
+	}
+
+	query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d", query, count)
+
+	var items []*schema.FlowInstanceResult
+	_, err := a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询发起的流程实例数据发生错误")
+	}
+
+	return items, nil
+}
+
+// QueryLastNodeInstance 查询节点实例
+func (a *Flow) QueryLastNodeInstance(flowInstanceID string) (*schema.NodeInstance, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_instance_id=? ORDER BY id DESC LIMIT 1", schema.NodeInstanceTableName)
+
+	var item schema.NodeInstance
+	err := a.DB.SelectOne(&item, query, flowInstanceID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, errors.Wrapf(err, "查询节点实例发生错误")
+	}
+
+	return &item, nil
+}
+
 // -----------------------------web查询操作(start)-------------------------------
 
 // QueryAllFlowPage 查询流程分页数据

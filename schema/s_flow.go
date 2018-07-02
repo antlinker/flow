@@ -271,6 +271,18 @@ type FlowDoneResult struct {
 	FormData       *string `db:"form_data" structs:"form_data" json:"form_data"`                      // 表单数据
 }
 
+// FlowInstanceResult 流程实例结果
+type FlowInstanceResult struct {
+	ID         int64  `db:"id" structs:"id" json:"id"`                              // 流程实例自增ID
+	RecordID   string `db:"record_id,size:36" structs:"record_id" json:"record_id"` // 流程实例记录内码
+	FlowID     string `db:"flow_id,size:36" structs:"flow_id" json:"flow_id"`       // 流程内码
+	Status     int64  `db:"status" structs:"status" json:"status"`                  // 流程状态(0:未开始 1:进行中 2:暂停 3:已停止 9:已完成)
+	Launcher   string `db:"launcher,size:36" structs:"launcher" json:"launcher"`    // 发起人
+	LaunchTime int64  `db:"launch_time" structs:"launch_time" json:"launch_time"`   // 发起时间
+	FlowCode   string `db:"flow_code,size:36" structs:"flow_code" json:"flow_code"` // 流程编号
+	FlowName   string `db:"flow_name,size:36" structs:"flow_name" json:"flow_name"` // 流程名称
+}
+
 // NodeOperating 节点操作
 type NodeOperating struct {
 	NodeGroup       []*Node
