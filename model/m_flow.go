@@ -312,7 +312,7 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 }
 
 // QueryTodo 查询用户的待办数据
-func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
+func (a *Flow) QueryTodo(typeCode, flowCode, userID string) ([]*schema.FlowTodoResult, error) {
 	var args []interface{}
 	query := fmt.Sprintf(`
 		SELECT
@@ -336,7 +336,10 @@ func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, err
 		`, schema.NodeInstanceTableName, schema.FlowInstanceTableName, schema.NodeTableName, schema.FormTableName, schema.FlowTableName, schema.NodeCandidateTableName)
 
 	args = append(args, userID)
-	if flowCode != "" {
+	if typeCode != "" {
+		query = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND type_code=?)", query, schema.FlowTableName)
+		args = append(args, typeCode)
+	} else if flowCode != "" {
 		query = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)", query, schema.FlowTableName)
 		args = append(args, flowCode)
 	}
@@ -417,7 +420,7 @@ func (a *Flow) GetDoneByID(nodeInstanceID string) (*schema.FlowDoneResult, error
 }
 
 // QueryDone 查询用户的已办数据
-func (a *Flow) QueryDone(flowCode, userID string, lastTime int64, count int) ([]*schema.FlowDoneResult, error) {
+func (a *Flow) QueryDone(typeCode, flowCode, userID string, lastTime int64, count int) ([]*schema.FlowDoneResult, error) {
 	table := fmt.Sprintf(`%s ni
 		JOIN %s fi ON ni.flow_instance_id = fi.record_id AND fi.deleted = ni.deleted
 		LEFT JOIN %s n ON ni.node_id = n.record_id AND n.deleted = ni.deleted
@@ -427,7 +430,10 @@ func (a *Flow) QueryDone(flowCode, userID string, lastTime int64, count int) ([]
 	where := "WHERE ni.deleted = 0 AND ni.status = 2 AND n.type_code='userTask' AND ni.processor=?"
 	args := []interface{}{userID}
 
-	if flowCode != "" {
+	if typeCode != "" {
+		where = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND type_code=?)", where, schema.FlowTableName)
+		args = append(args, typeCode)
+	} else if flowCode != "" {
 		where = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)", where, schema.FlowTableName)
 		args = append(args, flowCode)
 	}

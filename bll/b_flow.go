@@ -219,8 +219,8 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 }
 
 // QueryTodo 查询用户的待办节点实例数据
-func (a *Flow) QueryTodo(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
-	return a.FlowModel.QueryTodo(flowCode, userID)
+func (a *Flow) QueryTodo(typeCode, flowCode, userID string) ([]*schema.FlowTodoResult, error) {
+	return a.FlowModel.QueryTodo(typeCode, flowCode, userID)
 }
 
 // GetTodoByID 根据ID获取待办
@@ -234,8 +234,8 @@ func (a *Flow) GetDoneByID(nodeInstanceID string) (*schema.FlowDoneResult, error
 }
 
 // QueryDone 查询用户的已办数据
-func (a *Flow) QueryDone(flowCode, userID string, lastTime int64, count int) ([]*schema.FlowDoneResult, error) {
-	return a.FlowModel.QueryDone(flowCode, userID, lastTime, count)
+func (a *Flow) QueryDone(typeCode, flowCode, userID string, lastTime int64, count int) ([]*schema.FlowDoneResult, error) {
+	return a.FlowModel.QueryDone(typeCode, flowCode, userID, lastTime, count)
 }
 
 // GetDoneCount 获取已办数量
