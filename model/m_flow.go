@@ -727,11 +727,42 @@ func (a *Flow) QueryLaunchFlowInstanceResult(launcher, typeCode, flowCode string
 	if typeCode != "" {
 		query = fmt.Sprintf("%s AND f.type_code=?", query)
 		args = append(args, typeCode)
-	}
-	if flowCode != "" {
+	} else if flowCode != "" {
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
 	}
+
+	if lastID > 0 {
+		query = fmt.Sprintf("%s AND fi.id<?", query)
+		args = append(args, lastID)
+	}
+
+	query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d", query, count)
+
+	var items []*schema.FlowInstanceResult
+	_, err := a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "查询发起的流程实例数据发生错误")
+	}
+
+	return items, nil
+}
+
+// QueryTodoFlowInstanceResult 查询待办的流程实例数据
+func (a *Flow) QueryTodoFlowInstanceResult(userID, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
+	var args []interface{}
+	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0 AND fi.status = 1", schema.FlowInstanceTableName, schema.FlowTableName)
+	query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=1 AND record_id IN(SELECT node_instance_id FROM %s WHERE deleted=0 AND candidate_id=?))", query, schema.NodeInstanceTableName, schema.NodeCandidateTableName)
+	args = append(args, userID)
+
+	if typeCode != "" {
+		query = fmt.Sprintf("%s AND f.type_code=?", query)
+		args = append(args, typeCode)
+	} else if flowCode != "" {
+		query = fmt.Sprintf("%s AND f.code=?", query)
+		args = append(args, flowCode)
+	}
+
 	if lastID > 0 {
 		query = fmt.Sprintf("%s AND fi.id<?", query)
 		args = append(args, lastID)
@@ -758,11 +789,11 @@ func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode strin
 	if typeCode != "" {
 		query = fmt.Sprintf("%s AND f.type_code=?", query)
 		args = append(args, typeCode)
-	}
-	if flowCode != "" {
+	} else if flowCode != "" {
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
 	}
+
 	if lastID > 0 {
 		query = fmt.Sprintf("%s AND fi.id<?", query)
 		args = append(args, lastID)

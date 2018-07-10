@@ -606,7 +606,7 @@ func (e *Engine) StopFlowInstance(flowInstanceID string, allowStop func(*schema.
 // flowCode 流程编号
 // userID 待办人
 func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
-	return e.flowBll.QueryTodo(flowCode, userID)
+	return e.flowBll.QueryTodo("", flowCode, userID)
 }
 
 // QueryFlowHistory 查询流程历史数据
