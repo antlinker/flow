@@ -2,6 +2,7 @@ package bll
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/antlinker/flow/model"
@@ -11,6 +12,7 @@ import (
 
 // Flow 流程管理
 type Flow struct {
+	sync.RWMutex
 	FlowModel *model.Flow `inject:""`
 }
 
@@ -98,11 +100,15 @@ func (a *Flow) CreateNodeInstance(flowInstanceID, nodeID string, inputData []byt
 
 // DoneNodeInstance 完成节点实例
 func (a *Flow) DoneNodeInstance(nodeInstanceID, processor string, outData []byte) error {
+	// 加锁保证节点实例的处理过程
+	a.Lock()
+	defer a.Unlock()
+
 	nodeInstance, err := a.FlowModel.GetNodeInstance(nodeInstanceID)
 	if err != nil {
 		return err
 	} else if nodeInstance == nil || nodeInstance.Status == 2 {
-		return nil
+		return fmt.Errorf("无效的处理节点")
 	}
 
 	info := map[string]interface{}{
