@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -567,7 +568,7 @@ func (e *Engine) HandleFlow(ctx context.Context, nodeInstanceID, userID string, 
 	if err != nil {
 		return nil, err
 	} else if nodeInstance == nil || nodeInstance.Status != 1 {
-		return nil, nil
+		return nil, fmt.Errorf("无效的处理节点")
 	}
 	return e.nextFlowHandle(ctx, nodeInstanceID, userID, inputData)
 }
