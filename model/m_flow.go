@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/antlinker/flow/schema"
@@ -725,8 +726,8 @@ func (a *Flow) QueryLaunchFlowInstanceResult(launcher, typeCode, flowCode string
 	args = append(args, launcher)
 
 	if typeCode != "" {
-		query = fmt.Sprintf("%s AND f.type_code=?", query)
-		args = append(args, typeCode)
+		query = fmt.Sprintf("%s AND f.type_code IN(?)", query)
+		args = append(args, strings.Split(typeCode, ","))
 	} else if flowCode != "" {
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
@@ -739,6 +740,7 @@ func (a *Flow) QueryLaunchFlowInstanceResult(launcher, typeCode, flowCode string
 
 	query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d", query, count)
 
+	query, args, _ = a.DB.In(query, args...)
 	var items []*schema.FlowInstanceResult
 	_, err := a.DB.Select(&items, query, args...)
 	if err != nil {
@@ -758,8 +760,8 @@ func (a *Flow) QueryTodoFlowInstanceResult(userID, typeCode, flowCode string, la
 	args = append(args, userID)
 
 	if typeCode != "" {
-		query = fmt.Sprintf("%s AND f.type_code=?", query)
-		args = append(args, typeCode)
+		query = fmt.Sprintf("%s AND f.type_code IN(?)", query)
+		args = append(args, strings.Split(typeCode, ","))
 	} else if flowCode != "" {
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
@@ -772,6 +774,7 @@ func (a *Flow) QueryTodoFlowInstanceResult(userID, typeCode, flowCode string, la
 
 	query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d", query, count)
 
+	query, args, _ = a.DB.In(query, args...)
 	var items []*schema.FlowInstanceResult
 	_, err := a.DB.Select(&items, query, args...)
 	if err != nil {
@@ -791,8 +794,8 @@ func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode strin
 	args = append(args, processor)
 
 	if typeCode != "" {
-		query = fmt.Sprintf("%s AND f.type_code=?", query)
-		args = append(args, typeCode)
+		query = fmt.Sprintf("%s AND f.type_code IN(?)", query)
+		args = append(args, strings.Split(typeCode, ","))
 	} else if flowCode != "" {
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
@@ -805,6 +808,7 @@ func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode strin
 
 	query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d", query, count)
 
+	query, args, _ = a.DB.In(query, args...)
 	var items []*schema.FlowInstanceResult
 	_, err := a.DB.Select(&items, query, args...)
 	if err != nil {
