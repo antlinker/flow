@@ -564,12 +564,21 @@ func (e *Engine) LaunchFlow(ctx context.Context, flowID, userID string, inputDat
 // userID 处理人
 // inputData 输入数据
 func (e *Engine) HandleFlow(ctx context.Context, nodeInstanceID, userID string, inputData []byte) (*HandleResult, error) {
+	// 检查是否是节点候选人
+	exists, err := e.flowBll.CheckNodeCandidate(nodeInstanceID, userID)
+	if err != nil {
+		return nil, err
+	} else if !exists {
+		return nil, fmt.Errorf("无效的节点处理人")
+	}
+
 	nodeInstance, err := e.flowBll.GetNodeInstance(nodeInstanceID)
 	if err != nil {
 		return nil, err
 	} else if nodeInstance == nil || nodeInstance.Status != 1 {
 		return nil, fmt.Errorf("无效的处理节点")
 	}
+
 	return e.nextFlowHandle(ctx, nodeInstanceID, userID, inputData)
 }
 

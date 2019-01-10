@@ -312,6 +312,18 @@ func (a *Flow) QueryNodeCandidates(nodeInstanceID string) ([]*schema.NodeCandida
 	return items, nil
 }
 
+// CheckNodeCandidate 检查节点候选人
+func (a *Flow) CheckNodeCandidate(nodeInstanceID, userID string) (bool, error) {
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE deleted=0 AND node_instance_id=? AND candidate_id=?", schema.NodeCandidateTableName)
+
+	n, err := a.DB.SelectInt(query, nodeInstanceID, userID)
+	if err != nil {
+		return false, errors.Wrapf(err, "检查节点候选人发生错误")
+	}
+
+	return n > 0, nil
+}
+
 // QueryTodo 查询用户的待办数据
 func (a *Flow) QueryTodo(typeCode, flowCode, userID string) ([]*schema.FlowTodoResult, error) {
 	var args []interface{}
