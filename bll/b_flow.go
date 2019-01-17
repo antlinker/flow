@@ -230,8 +230,8 @@ func (a *Flow) CheckNodeCandidate(nodeInstanceID, userID string) (bool, error) {
 }
 
 // QueryTodo 查询用户的待办节点实例数据
-func (a *Flow) QueryTodo(typeCode, flowCode, userID string) ([]*schema.FlowTodoResult, error) {
-	return a.FlowModel.QueryTodo(typeCode, flowCode, userID)
+func (a *Flow) QueryTodo(typeCode, flowCode, userID string, count int) ([]*schema.FlowTodoResult, error) {
+	return a.FlowModel.QueryTodo(typeCode, flowCode, userID, count)
 }
 
 // GetTodoByID 根据ID获取待办
@@ -307,8 +307,8 @@ func (a *Flow) QueryFlowVersion(recordID string) ([]*schema.FlowQueryResult, err
 }
 
 // QueryFlowIDsByType 根据类型查询流程ID列表
-func (a *Flow) QueryFlowIDsByType(typeCode string) ([]string, error) {
-	return a.FlowModel.QueryFlowIDsByType(typeCode)
+func (a *Flow) QueryFlowIDsByType(typeCodes ...string) ([]string, error) {
+	return a.FlowModel.QueryFlowIDsByType(typeCodes...)
 }
 
 // QueryFlowByIDs 根据流程ID查询流程数据
@@ -319,6 +319,11 @@ func (a *Flow) QueryFlowByIDs(flowIDs []string) ([]*schema.FlowQueryResult, erro
 // GetFlowFormByNodeID 获取流程节点表单
 func (a *Flow) GetFlowFormByNodeID(nodeID string) (*schema.Form, error) {
 	return a.FlowModel.GetFlowFormByNodeID(nodeID)
+}
+
+// QueryNodeByTypeCodeAndFlowIDs 根据节点类型和流程ID列表查询节点数据
+func (a *Flow) QueryNodeByTypeCodeAndFlowIDs(typeCode string, flowIDs ...string) ([]*schema.Node, error) {
+	return a.FlowModel.QueryNodeByTypeCodeAndFlowIDs(typeCode, flowIDs...)
 }
 
 // GetNodeByFlowAndTypeCode 根据流程ID和节点类型获取节点数据
@@ -374,6 +379,20 @@ func (a *Flow) QueryTodoFlowInstanceResult(userID, typeCode, flowCode string, la
 // QueryHandleFlowInstanceResult 查询处理的流程实例结果
 func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
 	return a.FlowModel.QueryHandleFlowInstanceResult(processor, typeCode, flowCode, lastID, count)
+}
+
+// QueryLastNodeInstances 查询流程实例的最后一个节点实例
+func (a *Flow) QueryLastNodeInstances(flowInstanceIDs []string) (map[string]*schema.NodeInstance, error) {
+	items, err := a.FlowModel.QueryLastNodeInstances(flowInstanceIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	data := make(map[string]*schema.NodeInstance)
+	for _, item := range items {
+		data[item.FlowInstanceID] = item
+	}
+	return data, nil
 }
 
 // QueryLastNodeInstance 查询节点实例

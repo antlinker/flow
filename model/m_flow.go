@@ -325,7 +325,7 @@ func (a *Flow) CheckNodeCandidate(nodeInstanceID, userID string) (bool, error) {
 }
 
 // QueryTodo 查询用户的待办数据
-func (a *Flow) QueryTodo(typeCode, flowCode, userID string) ([]*schema.FlowTodoResult, error) {
+func (a *Flow) QueryTodo(typeCode, flowCode, userID string, count int) ([]*schema.FlowTodoResult, error) {
 	var args []interface{}
 	query := fmt.Sprintf(`
 		SELECT
@@ -356,7 +356,7 @@ func (a *Flow) QueryTodo(typeCode, flowCode, userID string) ([]*schema.FlowTodoR
 		query = fmt.Sprintf("%s AND fi.flow_id IN (SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND code=?)", query, schema.FlowTableName)
 		args = append(args, flowCode)
 	}
-	query = fmt.Sprintf("%s ORDER BY ni.id", query)
+	query = fmt.Sprintf("%s ORDER BY ni.id DESC LIMIT %d", query, count)
 
 	var items []*schema.FlowTodoResult
 	_, err := a.DB.Select(&items, query, args...)
@@ -590,11 +590,15 @@ func (a *Flow) QueryDoneIDs(flowCode, userID string) ([]string, error) {
 }
 
 // QueryFlowIDsByType 根据类型查询流程ID列表
-func (a *Flow) QueryFlowIDsByType(typeCode string) ([]string, error) {
-	query := fmt.Sprintf("SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND status=1 AND type_code=?", schema.FlowTableName)
+func (a *Flow) QueryFlowIDsByType(typeCodes ...string) ([]string, error) {
+	query := fmt.Sprintf("SELECT record_id FROM %s WHERE deleted=0 AND flag=1 AND status=1 AND type_code IN(?)", schema.FlowTableName)
+	query, args, err := a.DB.In(query, typeCodes)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据类型查询流程ID列表发生错误")
+	}
 
 	var items []*schema.Flow
-	_, err := a.DB.Select(&items, query, typeCode)
+	_, err = a.DB.Select(&items, query, args...)
 	if err != nil {
 		return nil, errors.Wrapf(err, "根据类型查询流程ID列表发生错误")
 	}
@@ -623,13 +627,27 @@ func (a *Flow) QueryFlowByIDs(flowIDs []string) ([]*schema.FlowQueryResult, erro
 		return nil, nil
 	}
 
+	var codes []string
+	var versions []int64
+	for _, item := range items {
+		codes = append(codes, item.Code)
+		versions = append(versions, item.Version)
+	}
+
+	// 批量查询
+	flowResults, err := a.QueryFlowQueryResultByCodesAndVersions(codes, versions)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据流程ID查询流程数据发生错误")
+	}
+
 	result := make([]*schema.FlowQueryResult, len(items))
 	for i, item := range items {
-		flowResult, verr := a.GetFlowQueryResultByCodeAndVersion(item.Code, item.Version)
-		if verr != nil {
-			return nil, verr
+		for _, fritem := range flowResults {
+			if item.Code == fritem.Code && item.Version == fritem.Version {
+				result[i] = fritem
+				break
+			}
 		}
-		result[i] = flowResult
 	}
 
 	return result, nil
@@ -647,7 +665,24 @@ func (a *Flow) GetFlowFormByNodeID(nodeID string) (*schema.Form, error) {
 	return a.GetForm(node.FormID)
 }
 
+// QueryNodeByTypeCodeAndFlowIDs 根据节点类型和流程ID列表查询节点数据
+func (a *Flow) QueryNodeByTypeCodeAndFlowIDs(typeCode string, flowIDs ...string) ([]*schema.Node, error) {
+	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND type_code=? AND flow_id IN(?)", schema.NodeTableName)
+	query, args, err := a.DB.In(query, typeCode, flowIDs)
+	if err != nil {
+		return nil, errors.Wrap(err, "根据节点类型和流程ID列表查询节点数据发生错误")
+	}
+
+	var items []*schema.Node
+	_, err = a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrap(err, "根据节点类型和流程ID列表查询节点数据发生错误")
+	}
+	return items, nil
+}
+
 // GetNodeByFlowAndTypeCode 根据流程ID和节点类型获取节点数据
+// 准备废弃，请使用（QueryNodeByTypeCodeAndFlowIDs）代替
 func (a *Flow) GetNodeByFlowAndTypeCode(flowID, typeCode string) (*schema.Node, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_id=? AND type_code=?", schema.NodeTableName)
 
@@ -830,6 +865,45 @@ func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode strin
 	return items, nil
 }
 
+// QueryLastNodeInstances 查询流程实例的最后一个节点实例
+func (a *Flow) QueryLastNodeInstances(flowInstanceIDs []string) ([]*schema.NodeInstance, error) {
+	errMsg := "查询流程实例的最后一个节点实例发生错误"
+	query := fmt.Sprintf("SELECT MAX(id)'id' FROM %s WHERE deleted=0 AND flow_instance_id IN(?) GROUP BY flow_instance_id", schema.NodeInstanceTableName)
+	query, args, err := a.DB.In(query, flowInstanceIDs)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	}
+
+	type IDItem struct {
+		ID int64 `db:"id"`
+	}
+	var idItems []IDItem
+	_, err = a.DB.Select(&idItems, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	} else if len(idItems) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]int64, len(idItems))
+	for i, item := range idItems {
+		ids[i] = item.ID
+	}
+	query = fmt.Sprintf("SELECT * FROM %s WHERE id IN(?)", schema.NodeInstanceTableName)
+	query, args, err = a.DB.In(query, ids)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	}
+
+	var items []*schema.NodeInstance
+	_, err = a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	}
+
+	return items, nil
+}
+
 // QueryLastNodeInstance 查询节点实例
 func (a *Flow) QueryLastNodeInstance(flowInstanceID string) (*schema.NodeInstance, error) {
 	query := fmt.Sprintf("SELECT * FROM %s WHERE deleted=0 AND flow_instance_id=? ORDER BY id DESC LIMIT 1", schema.NodeInstanceTableName)
@@ -957,7 +1031,26 @@ func (a *Flow) QueryGroupFlowPage(params schema.FlowQueryParam, pageIndex, pageS
 	return int64(len(items)), result, err
 }
 
+// QueryFlowQueryResultByCodesAndVersions 根据编号和版本列表查询流程结果数据
+func (a *Flow) QueryFlowQueryResultByCodesAndVersions(codes []string, versions []int64) ([]*schema.FlowQueryResult, error) {
+	query := fmt.Sprintf("SELECT id,record_id,created,code,name,version,type_code,status,memo FROM %s", schema.FlowTableName)
+	query = fmt.Sprintf("%s WHERE deleted=0 AND flag=1 AND code IN(?) AND version IN(?)", query)
+
+	query, args, err := a.DB.In(query, codes, versions)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据编号和版本列表查询流程结果数据发生错误")
+	}
+
+	var items []*schema.FlowQueryResult
+	_, err = a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, "根据编号和版本列表查询流程结果数据发生错误")
+	}
+	return items, nil
+}
+
 // GetFlowQueryResultByCodeAndVersion 根据编号和版本获取流程结果
+// 准备废弃，使用(QueryFlowQueryResultByCodesAndVersions)代替
 func (a *Flow) GetFlowQueryResultByCodeAndVersion(code string, version int64) (*schema.FlowQueryResult, error) {
 	query := fmt.Sprintf("SELECT id,record_id,created,code,name,version,type_code,status,memo FROM %s", schema.FlowTableName)
 	query = fmt.Sprintf("%s WHERE deleted=0 AND flag=1 AND code=? AND version=?", query)

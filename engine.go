@@ -17,7 +17,6 @@ import (
 	"github.com/antlinker/flow/schema"
 	"github.com/antlinker/flow/service/db"
 	"github.com/antlinker/flow/util"
-
 	"github.com/facebookgo/inject"
 	"github.com/pkg/errors"
 )
@@ -123,22 +122,32 @@ func (e *Engine) StartTiming(interval time.Duration) {
 
 	go func() {
 		for range e.timingTicker.C {
-			items, err := e.flowBll.QueryExpiredNodeTiming()
+			err := e.handleTiming()
 			if err != nil {
-				e.errorf("%+v", err)
-				continue
-			}
-
-			for _, item := range items {
-				err = e.handleExpiredNodeTiming(item)
-				if err != nil {
-					e.errorf("%+v", err)
-					continue
-				}
+				e.errorf("处理定时任务发生错误：%v", err)
 			}
 		}
 	}()
+}
 
+func (e *Engine) handleTiming() error {
+	defer func() {
+		if err := recover(); err != nil {
+			e.errorf("处理定时任务发生崩溃：%v", err)
+		}
+	}()
+	items, err := e.flowBll.QueryExpiredNodeTiming()
+	if err != nil {
+		return err
+	}
+
+	for _, item := range items {
+		err = e.handleExpiredNodeTiming(item)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // 处理定时节点
@@ -160,11 +169,11 @@ func (e *Engine) handleExpiredNodeTiming(item *schema.NodeTiming) error {
 
 	if item.Input != "" {
 		var v map[string]interface{}
-		json.Unmarshal([]byte(item.Input), &v)
+		_ = json.Unmarshal([]byte(item.Input), &v)
 
 		if ni.InputData != "" {
 			iv := make(map[string]interface{})
-			json.Unmarshal([]byte(ni.InputData), &iv)
+			_ = json.Unmarshal([]byte(ni.InputData), &iv)
 
 			for key, val := range v {
 				iv[key] = val
@@ -616,7 +625,7 @@ func (e *Engine) StopFlowInstance(flowInstanceID string, allowStop func(*schema.
 // flowCode 流程编号
 // userID 待办人
 func (e *Engine) QueryTodoFlows(flowCode, userID string) ([]*schema.FlowTodoResult, error) {
-	return e.flowBll.QueryTodo("", flowCode, userID)
+	return e.flowBll.QueryTodo("", flowCode, userID, 100)
 }
 
 // QueryFlowHistory 查询流程历史数据
