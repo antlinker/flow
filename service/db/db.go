@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"strings"
 	"time"
-
 	"github.com/LyricTian/retry"
 	"github.com/pkg/errors"
 	"gopkg.in/gorp.v2"
