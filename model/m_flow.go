@@ -1085,7 +1085,7 @@ func (a *Flow) QueryFlowVersion(code string) ([]*schema.FlowQueryResult, error) 
 
 
 // QueryTodoWebFlowInstanceResult web查询待办的流程实例数据
-func (a *Flow) QueryTodoWebFlowInstanceResult(userID, typeCode, flowCode string, count int,ParamSearchList map[string]string) ([]*schema.FlowWebInstanceResult, error) {
+func (a *Flow) QueryTodoWebFlowInstanceResult(userID, typeCode, flowCode string, count int,ParamSearchList map[string]string) ([]*schema.FlowWebInstanceResult, int64,error) {
 	var args []interface{}
 	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0 AND fi.status = 1", schema.FlowInstanceTableName, schema.FlowTableName)
 	//最后的更改
@@ -1110,7 +1110,9 @@ func (a *Flow) QueryTodoWebFlowInstanceResult(userID, typeCode, flowCode string,
 		query = fmt.Sprintf("%s AND f.code=?", query)
 		args = append(args, flowCode)
 	}
-
+	//获取信息条数
+	tmpSql := `SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name'`
+	num := a.GetWebFlowNumber(tmpSql,query,args )
 
 	if v,ok := ParamSearchList["page"];ok {
 		if v != "" {
@@ -1123,16 +1125,16 @@ func (a *Flow) QueryTodoWebFlowInstanceResult(userID, typeCode, flowCode string,
 	var items []*schema.FlowWebInstanceResult
 	_, err := a.DB.Select(&items, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, "查询发起的流程实例数据发生错误")
+		return nil, 0,errors.Wrapf(err, "查询发起的流程实例数据发生错误")
 	}
 
-	return items, nil
+	return items, num,nil
 }
 
 
 
 // QueryWebHandleFlowInstanceResult web查询处理的流程实例结果
-func (a *Flow) QueryWebHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int  , ParamSearchList map[string]string) ([]*schema.FlowInstanceResult, error) {
+func (a *Flow) QueryWebHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int  , ParamSearchList map[string]string) ([]*schema.FlowInstanceResult,int64, error) {
 	var (
 		args 	[]interface{}
 
@@ -1163,39 +1165,24 @@ func (a *Flow) QueryWebHandleFlowInstanceResult(processor, typeCode, flowCode st
 		args = append(args, flowCode)
 	}
 	tmpSql:=`SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name'`
+	//获取信息条数
 	num := a.GetWebFlowNumber(tmpSql,query,args )
-
-	fmt.Println("开始打印 --------------------------------条数")
-	fmt.Println()
-	fmt.Println(num)
-	fmt.Println()
-	fmt.Println("开始打印 --------------------------------条数")
 
 	if v,ok := ParamSearchList["page"];ok {
 		if v != "" {
-			//tmpSql := query
-			//tmpSql = fmt.Sprintf("select count(%s) as num ", tmpSql)
-			//tmpSql, args, _ = a.DB.In(tmpSql, args...)
-			//_, err := a.DB.Select(&items, tmpSql, args...)
 			page ,_ := strconv.Atoi(v)
 			query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d offset %d", query, count,(page - 1 )*count)
 		}
-	} else {
-		if lastID > 0 {
-			query = fmt.Sprintf("%s AND fi.id<?", query)
-			args = append(args, lastID)
-		}
-		query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d", query, count)
 	}
 
 	query, args, _ = a.DB.In(query, args...)
 	var items []*schema.FlowInstanceResult
 	_, err := a.DB.Select(&items, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, "查询发起的流程实例数据发生错误")
+		return nil, 0,errors.Wrapf(err, "查询发起的流程实例数据发生错误")
 	}
 
-	return items, nil
+	return items, num,nil
 }
 
 // QueryWebLastNodeInstances web查询流程实例的最后一个节点实例
@@ -1255,12 +1242,6 @@ func (a *Flow) QueryWebLastNodeInstances(flowInstanceIDs []string,ParamSearchLis
 // GetWebFlowNumber 获取条数
 func (a *Flow)GetWebFlowNumber(tmpsql,sql string ,args []interface{})(num int64){
 	sql = strings.Replace(sql, tmpsql, " select count(fi.id) as num  ", 1)
-
-	fmt.Println("开始打印 --------------------------------SQL")
-	fmt.Println()
-	fmt.Println(sql)
-	fmt.Println()
-	fmt.Println("开始打印 --------------------------------SQL")
 	sql, args, _ = a.DB.In(sql, args...)
 	num ,_		 = a.DB.SelectInt(sql, args...)
 	return

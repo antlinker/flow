@@ -377,7 +377,7 @@ func (a *Flow) QueryTodoFlowInstanceResult(userID, typeCode, flowCode string, la
 }
 
 // QueryWebTodoFlowInstanceResult web查询待办的流程实例数据
-func (a *Flow) QueryWebTodoFlowInstanceResult(userID, typeCode, flowCode string,  count int,ParamSearchList map[string]string) ([]*schema.FlowWebInstanceResult, error) {
+func (a *Flow) QueryWebTodoFlowInstanceResult(userID, typeCode, flowCode string,  count int,ParamSearchList map[string]string) ([]*schema.FlowWebInstanceResult,int64, error) {
 	return a.FlowModel.QueryTodoWebFlowInstanceResult(userID, typeCode, flowCode, count,ParamSearchList)
 }
 
@@ -387,7 +387,7 @@ func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode strin
 }
 
 // QueryWebHandleFlowInstanceResult web查询处理的流程实例结果
-func (a *Flow) QueryWebHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int , ParamSearchList map[string]string ) ([]*schema.FlowInstanceResult, error) {
+func (a *Flow) QueryWebHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int , ParamSearchList map[string]string ) ([]*schema.FlowInstanceResult,int64, error) {
 	return a.FlowModel.QueryWebHandleFlowInstanceResult(processor, typeCode, flowCode, lastID, count,ParamSearchList)
 }
 
