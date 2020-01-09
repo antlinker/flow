@@ -406,9 +406,9 @@ func (a *Flow) QueryLastNodeInstances(flowInstanceIDs []string) (map[string]*sch
 }
 
 // QueryWebLastNodeInstances web查询流程实例的最后一个节点实例
-func (a *Flow) QueryWebLastNodeInstances(flowInstanceIDs []string,ParamSearchList map[string]string) (map[string]*schema.NodeInstance, error) {
+func (a *Flow) QueryWebLastNodeInstances(flowInstanceIDs []string,ParamSearchList map[string]string,isComplete bool) (map[string]*schema.NodeInstance, error) {
 
-	items, err := a.FlowModel.QueryWebLastNodeInstances(flowInstanceIDs,ParamSearchList)
+	items, err := a.FlowModel.QueryWebLastNodeInstances(flowInstanceIDs,ParamSearchList,isComplete)
 	if err != nil {
 		return nil, err
 	}
