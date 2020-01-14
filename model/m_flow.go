@@ -1098,9 +1098,9 @@ func (a *Flow) QueryTodoWebFlowInstanceResult(userID, typeCode, flowCode string,
 			tmpSql += ` AND input_data->'$.` + i + `' = ? `
 			args = append(args, v)
 		}
-		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=1 %s AND input_data->'$.status' !=2  AND record_id IN(SELECT node_instance_id FROM %s WHERE deleted=0 AND candidate_id=?))", query, schema.NodeInstanceTableName, tmpSql,schema.NodeCandidateTableName)
+		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=1 %s AND input_data->'$.status' !=2  AND input_data->'$.status' !=3 AND record_id IN(SELECT node_instance_id FROM %s WHERE deleted=0 AND candidate_id=?))", query, schema.NodeInstanceTableName, tmpSql,schema.NodeCandidateTableName)
 	}else{
-		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=1  AND input_data->'$.title' != '状态调整'  AND input_data->'$.status' !=2  AND input_data->'$.title' != '班干部学生状态修改' AND input_data->'$.title' != '学生调班申请' AND record_id IN(SELECT node_instance_id FROM %s WHERE deleted=0 AND candidate_id=?))", query, schema.NodeInstanceTableName, schema.NodeCandidateTableName)
+		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=1  AND input_data->'$.title' != '状态调整'  AND input_data->'$.status' !=2 AND input_data->'$.status' !=3  AND input_data->'$.title' != '班干部学生状态修改' AND input_data->'$.title' != '学生调班申请' AND record_id IN(SELECT node_instance_id FROM %s WHERE deleted=0 AND candidate_id=?))", query, schema.NodeInstanceTableName, schema.NodeCandidateTableName)
 	}
 	args = append(args, userID)
 
