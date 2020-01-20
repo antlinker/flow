@@ -798,8 +798,6 @@ func (a *Flow) QueryLaunchFlowInstanceResult(launcher, typeCode, flowCode string
 	return items, nil
 }
 
-
-
 // QueryTodoFlowInstanceResult 查询待办的流程实例数据
 func (a *Flow) QueryTodoFlowInstanceResult(userID, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
 	var args []interface{}
@@ -834,7 +832,6 @@ func (a *Flow) QueryTodoFlowInstanceResult(userID, typeCode, flowCode string, la
 	return items, nil
 }
 
-
 // QueryHandleFlowInstanceResult 查询处理的流程实例结果
 func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int) ([]*schema.FlowInstanceResult, error) {
 	var args []interface{}
@@ -868,7 +865,6 @@ func (a *Flow) QueryHandleFlowInstanceResult(processor, typeCode, flowCode strin
 
 	return items, nil
 }
-
 
 // QueryLastNodeInstances 查询流程实例的最后一个节点实例
 func (a *Flow) QueryLastNodeInstances(flowInstanceIDs []string) ([]*schema.NodeInstance, error) {
