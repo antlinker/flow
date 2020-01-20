@@ -3,6 +3,7 @@ package model
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -1078,4 +1079,159 @@ func (a *Flow) QueryFlowVersion(code string) ([]*schema.FlowQueryResult, error) 
 	return items, nil
 }
 
+
+// QueryTodoWebFlowInstanceResult web查询待办的流程实例数据
+func (a *Flow) QueryTodoWebFlowInstanceResult(userID, typeCode, flowCode string, count int,ParamSearchList map[string]string) ([]*schema.FlowWebInstanceResult, int64,error) {
+	var args []interface{}
+	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0 AND fi.status = 1 AND f.record_id NOT IN (select flow_id from f_flow_range where user_type=0 or user_type=2)", schema.FlowInstanceTableName, schema.FlowTableName)
+	//最后的更改
+	if ParamSearchList != nil && len(ParamSearchList) > 0  {
+		tmpSql := `  AND input_data->'$.title' != '班干部学生状态修改' AND input_data->'$.title' != '学生调班申请'   AND input_data->'$.title' != '状态调整'  `
+		for i, v := range ParamSearchList {
+			if i == "page"{
+				continue
+			}
+			tmpSql += ` AND input_data->'$.` + i + `' = ? `
+			args = append(args, v)
+		}
+		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=1 %s AND input_data->'$.status' !=2  AND input_data->'$.status' !=3 AND record_id IN(SELECT node_instance_id FROM %s WHERE deleted=0 AND candidate_id=?))", query, schema.NodeInstanceTableName, tmpSql,schema.NodeCandidateTableName)
+	}else{
+		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=1  AND input_data->'$.title' != '状态调整'  AND input_data->'$.status' !=2 AND input_data->'$.status' !=3  AND input_data->'$.title' != '班干部学生状态修改' AND input_data->'$.title' != '学生调班申请' AND record_id IN(SELECT node_instance_id FROM %s WHERE deleted=0 AND candidate_id=?))", query, schema.NodeInstanceTableName, schema.NodeCandidateTableName)
+	}
+	args = append(args, userID)
+
+	if typeCode != "" {
+		query = fmt.Sprintf("%s AND f.type_code IN(?)", query)
+		args = append(args, strings.Split(typeCode, ","))
+	} else if flowCode != "" {
+		query = fmt.Sprintf("%s AND f.code=?", query)
+		args = append(args, flowCode)
+	}
+	//获取信息条数
+	tmpSql := `SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name'`
+	num := a.GetWebFlowNumber(tmpSql,query,args )
+
+	if v,ok := ParamSearchList["page"];ok {
+		if v != "" {
+			page ,_ := strconv.Atoi(v)
+			query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d offset %d", query, count,(page - 1 )*count)
+		}
+	}
+
+	query, args, _ = a.DB.In(query, args...)
+	var items []*schema.FlowWebInstanceResult
+	_, err := a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, 0,errors.Wrapf(err, "查询发起的流程实例数据发生错误")
+	}
+
+	return items, num,nil
+}
+
+// QueryWebHandleFlowInstanceResult web查询处理的流程实例结果
+func (a *Flow) QueryWebHandleFlowInstanceResult(processor, typeCode, flowCode string, lastID int64, count int  , ParamSearchList map[string]string) ([]*schema.FlowInstanceResult,int64, error) {
+	var (
+		args 	[]interface{}
+
+	)
+	query := fmt.Sprintf("SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name' FROM %s fi LEFT JOIN %s f ON fi.flow_id=f.record_id AND f.deleted=0 WHERE fi.deleted=0 AND f.record_id NOT IN (select flow_id from f_flow_range where user_type=0 or user_type=2) ", schema.FlowInstanceTableName, schema.FlowTableName)
+	query = fmt.Sprintf("%s AND fi.launcher!=?", query)
+	args = append(args, processor)
+	if ParamSearchList != nil && len(ParamSearchList) > 0 {
+		tmpSql := ` AND input_data->'$.title' != '班干部学生状态修改' AND input_data->'$.title' != '学生调班申请' AND input_data->'$.title' != '状态调整' `
+		for i, v := range ParamSearchList {
+			if i == "page"{
+				continue
+			}
+			tmpSql += ` AND input_data->'$.` + i + `' = ? `
+			args = append(args, v)
+		}
+		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=2 %s AND processor=?)", query, schema.NodeInstanceTableName,tmpSql)
+	}else  {
+		query = fmt.Sprintf("%s AND fi.record_id IN(SELECT flow_instance_id FROM %s WHERE deleted=0 AND status=2   AND input_data->'$.title' != '状态调整'  AND  input_data->'$.title' != '班干部学生状态修改' AND input_data->'$.title' != '学生调班申请' AND processor=?)", query, schema.NodeInstanceTableName)
+
+	}
+	args = append(args, processor)
+
+	if typeCode != "" {
+		query = fmt.Sprintf("%s AND f.type_code IN(?)", query)
+		args = append(args, strings.Split(typeCode, ","))
+	} else if flowCode != "" {
+		query = fmt.Sprintf("%s AND f.code=?", query)
+		args = append(args, flowCode)
+	}
+	tmpSql:=`SELECT fi.id,fi.record_id,fi.flow_id,fi.status,fi.launcher,fi.launch_time,f.code 'flow_code',f.name 'flow_name'`
+	//获取信息条数
+	num := a.GetWebFlowNumber(tmpSql,query,args )
+
+	if v,ok := ParamSearchList["page"];ok {
+		if v != "" {
+			page ,_ := strconv.Atoi(v)
+			query = fmt.Sprintf("%s ORDER BY fi.id DESC LIMIT %d offset %d", query, count,(page - 1 )*count)
+		}
+	}
+
+	query, args, _ = a.DB.In(query, args...)
+	var items []*schema.FlowInstanceResult
+	_, err := a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, 0,errors.Wrapf(err, "查询发起的流程实例数据发生错误")
+	}
+
+	return items, num,nil
+}
+
+// QueryWebLastNodeInstances web查询流程实例的最后一个节点实例
+func (a *Flow) QueryWebLastNodeInstances(flowInstanceIDs []string,ParamSearchList map[string]string,isComplete bool) ([]*schema.NodeInstance, error) {
+	var (
+		query ,errMsg,tmpSQL string
+	)
+	if isComplete{
+		tmpSQL = ` AND status=2 `
+	}
+	query = fmt.Sprintf("SELECT MAX(id)'id' FROM %s WHERE deleted=0 AND flow_instance_id IN(?) %s GROUP BY flow_instance_id", schema.NodeInstanceTableName,tmpSQL)
+
+
+	errMsg = "查询流程实例的最后一个节点实例发生错误"
+	query, args, err := a.DB.In(query, flowInstanceIDs)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	}
+
+	type IDItem struct {
+		ID int64 `db:"id"`
+	}
+	var idItems []IDItem
+	_, err = a.DB.Select(&idItems, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	} else if len(idItems) == 0 {
+		return nil, nil
+	}
+
+	ids := make([]int64, len(idItems))
+	for i, item := range idItems {
+		ids[i] = item.ID
+	}
+	query = fmt.Sprintf("SELECT * FROM %s WHERE id IN(?)", schema.NodeInstanceTableName)
+	query, args, err = a.DB.In(query, ids)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	}
+
+	var items []*schema.NodeInstance
+	_, err = a.DB.Select(&items, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errMsg)
+	}
+	return items, nil
+}
+
+// GetWebFlowNumber 获取条数
+func (a *Flow)GetWebFlowNumber(tmpsql,sql string ,args []interface{})(num int64){
+	sql = strings.Replace(sql, tmpsql, " select count(fi.id) as num  ", 1)
+	sql, args, _ = a.DB.In(sql, args...)
+	num ,_		 = a.DB.SelectInt(sql, args...)
+	return
+}
 // -----------------------------web查询操作(end)---------------------------------

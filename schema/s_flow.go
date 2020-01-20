@@ -283,6 +283,13 @@ type FlowInstanceResult struct {
 	FlowName   string `db:"flow_name,size:36" structs:"flow_name" json:"flow_name"` // 流程名称
 }
 
+//FlowWebInstanceResult web流程实例结果
+type FlowWebInstanceResult struct{
+	FlowInstanceResult
+	Num  int64  `db:"num" structs:"num" json:"num"`    //页码
+}
+
+
 // NodeOperating 节点操作
 type NodeOperating struct {
 	NodeGroup       []*Node
